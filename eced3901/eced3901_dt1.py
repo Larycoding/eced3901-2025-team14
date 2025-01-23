@@ -229,7 +229,9 @@ class NavigateSquare(Node):
         # msg.linear.x
         # msg.angular.z		        	
 
-        laser_ranges = self.ldi.get_range_array(0.0)
+        laser_ranges = self.ldi.get_range_array(0.0) #asks for specific array data..forward plus a few degrees
+       #create 3 ranges using above function
+    
         if laser_ranges is None:
             self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
             return
@@ -237,14 +239,16 @@ class NavigateSquare(Node):
         # This gets the minimum range, but ignores NONE values. The LIDAR data isn't always
         # reliable, so we might want to ignore NONEs. We also might want to select the minimum
         # range from our entire sweep.
-        laser_ranges_min = min_ignore_None(laser_ranges)
+        laser_ranges_min = min_ignore_None(laser_ranges) #gets smallest of read in lidar data
+        #all three ranges should be passed through this
 
         # If ALL the lidar returns are NONE, it means all returns were invalid (probably too close).
         # So only do something if the 
-        if laser_ranges_min and laser_ranges_min > 0.5:
+        #decisions to be edited
+        if laser_ranges_min and laser_ranges_min > 0.5: 
             msg.linear.x = self.x_vel
         elif laser_ranges_min and laser_ranges_min < 0.5:
-            msg.angular.z = 1.0
+            msg.angular.z = 1.0 #edit potentially for 90 degree turn or turn until certain value using decision
 
         self.pub_vel.publish(msg)
         self.get_logger().info("Sent: " + str(msg))      
@@ -268,9 +272,9 @@ class NavigateSquare(Node):
         #self.get_logger().info('Scan Data: "%s"' % msg)
         #self.get_logger().info('Scan Data: "%s"' % msg.angle_increment)
 
-        anglestep = msg.angle_increment
-        self.minrange = msg.range_min
-        maxrange = msg.range_max
+        anglestep = msg.angle_increment #amount of angle increments
+        self.minrange = msg.range_min #minimum acceptable data
+        maxrange = msg.range_max #maximum acceptable data
         ranges = msg.ranges[1:]
 
         self.laser_range = max(ranges[0:5])
