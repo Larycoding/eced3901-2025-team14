@@ -28,7 +28,7 @@ from collections import deque
 
 class LaserDataInterface(object):
 
-    def __init__(self, storage_depth=4, logger=None):
+    def __init__(self, storage_depth=4, logger=None): 
         self.laser_data = deque()
         self.depth = storage_depth
         self.logger = logger
@@ -161,7 +161,7 @@ class NavigateSquare(Node):
 
         # WARNING: Check for updates, note this is set and will run backwards
         #          on the physical model but correctly in simulation.
-        self.x_vel = 0.2
+        self.x_vel = 0.2 # velocity changed to correct value for robot not simulation, took neg out rq
 
         self.x_now = 0.0
         self.x_init = 0.0
@@ -255,7 +255,7 @@ class NavigateSquare(Node):
         #self.get_logger().info(f'Timer hit')
 
         #self.control_example_odom()
-        self.control_example_lidar()  
+        self.control_example_lidar()  #switched to lidar from lab instruction, keep odom commented out unless using
 
     def odom_callback(self, msg):
         """Callback on 'odom' subscription"""
