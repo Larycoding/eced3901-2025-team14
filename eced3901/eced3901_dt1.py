@@ -270,11 +270,11 @@ class NavigateSquare(Node):
                 msg.angular.z = 1.0 #turn maybe negative to turn other way
             
 
-
-        if laser_ranges_min and laser_ranges_min > 0.5: 
-            msg.linear.x = self.x_vel
-        elif laser_ranges_min and laser_ranges_min < 0.5:
-            msg.angular.z = 1.0 #edit potentially for 90 degree turn or turn until certain value using decision
+        # Old if statements
+       # if laser_ranges_min and laser_ranges_min > 0.5: 
+        #    msg.linear.x = self.x_vel
+       # elif laser_ranges_min and laser_ranges_min < 0.5:
+         #   msg.angular.z = 1.0 #edit potentially for 90 degree turn or turn until certain value using decision
 
         self.pub_vel.publish(msg)
         self.get_logger().info("Sent: " + str(msg))      
