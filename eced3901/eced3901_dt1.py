@@ -228,8 +228,11 @@ class NavigateSquare(Node):
         # This has two fields:
         # msg.linear.x
         # msg.angular.z		        	
-
-        laser_ranges = self.ldi.get_range_array(0.0) #asks for specific array data..forward plus a few degrees
+        #either here until after decisions or this fuction call needs to be repeated in a while or for loop.
+        laser_rangesA = self.ldi.get_range_array(0.0)#asks for specific array data..forward plus a few degrees
+        #may need to reduce the range because it may be too far back with the offset
+        laser_rangesB = self.ldi.get_range_array(90.0) #range from 95 degrees to 85 degrees on the left side
+        laser_rangesC = self.ldi.get_range_array(95.0) #range from 100 degrees to 90 degrees on the left side
        #create 3 ranges using above function
     
         if laser_ranges is None:
@@ -239,12 +242,32 @@ class NavigateSquare(Node):
         # This gets the minimum range, but ignores NONE values. The LIDAR data isn't always
         # reliable, so we might want to ignore NONEs. We also might want to select the minimum
         # range from our entire sweep.
-        laser_ranges_min = min_ignore_None(laser_ranges) #gets smallest of read in lidar data
+        laser_ranges_minA = min_ignore_None(laser_rangesA) #gets smallest of read in lidar data at 0 degrees
+        laser_ranges_minB = min_ignore_None(laser_rangesB)#get smallest value from readings around 90 degrees
+        laser_ranges_minC = min_ignore_None(laser_rangesC)#get smallest value from reading around 95 degrees
+
         #all three ranges should be passed through this
 
         # If ALL the lidar returns are NONE, it means all returns were invalid (probably too close).
         # So only do something if the 
         #decisions to be edited
+        if laser_ranges_minA >0.5:
+            if laser_ranges_minB <0.5 and laser_ranges_minC < 0.5:
+                #drive forward
+                msg.linear.x = self.x_vel
+            elif laser_ranges_minB > 0.5 and laser_ranges_minC <0.5:
+                #turn
+                msg.angular.z = 1.0
+            elif laser_ranges_minB <0.5 and laser_ranges_minC >0.5:
+                #drive forward
+                msg.linear.x = self.x_vel
+        elif laser_ranges_minA < 0.5:
+            #stop and turn?
+            if laser_ranges_minB<0.5 and laser_ranges_minC<0.5:
+                msg.angular.z = 1.0 #turn maybe negative to turn other way
+            
+
+
         if laser_ranges_min and laser_ranges_min > 0.5: 
             msg.linear.x = self.x_vel
         elif laser_ranges_min and laser_ranges_min < 0.5:
