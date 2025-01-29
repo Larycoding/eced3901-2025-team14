@@ -255,6 +255,9 @@ class NavigateSquare(Node):
             if laser_ranges_minB <0.5 and laser_ranges_minC < 0.5:
                 #drive forward
                 msg.linear.x = self.x_vel
+            elif laser_ranges_minB > 0.5 and laser_ranges_minC>0.5:
+                #if nothing in front or beside it on the left drive forward
+                msg.linear.x = self.x_vel
             elif laser_ranges_minB > 0.5 and laser_ranges_minC <0.5:
                 #turn
                 msg.angular.z = 1.0
