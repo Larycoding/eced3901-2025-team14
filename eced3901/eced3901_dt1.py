@@ -233,30 +233,26 @@ class NavigateSquare(Node):
         #either here until after decisions or this fuction call needs to be repeated in a while or for loop.
         laser_rangesA = self.ldi.get_range_array(0.0)#asks for specific array data..forward plus a few degrees
         #may need to reduce the range because it may be too far back with the offset
-        laser_rangesB = self.ldi.get_range_array(90.0) #range from 95 degrees to 85 degrees on the left side
-        laser_rangesC = self.ldi.get_range_array(95.0) #range from 100 degrees to 90 degrees on the left side
-        #create 3 ranges using above function
+        laser_rangesB = self.ldi.get_range_array(45.0) #range from 40 degrees to 50 degrees on the left side
+        laser_rangesC = self.ldi.get_range_array(90.0) #range from 85 degrees to 95 degrees on the left side
         laser_rangesD = self.ldi.get_range_array(135.0) #range from 130 to 140 degrees left (was added for lab 1 to detect 
-	    #the corners of the box are in optimal position to make a turn
-        laser_rangesE = self.ldi.get_range_array(45.0) #range from 40 to 50 degrees left (was added for lab1 to detect the 
-	    #first corner of the box to aid in recognition of the task
-        laser_rangesF = self.ldi.get_range_array(315.0)#range from 310 to 320 degrees left (was added for lab1 to detect the 
-	    #first corner of the box to aid in recognition of the task
-        laser_rangesG = self.ldi.get_range_array(225.0)#range from 220 to 230 degrees left (was added for lab 1 to detect 
-	    #the corners of the box are in optimal position to make a turn
-	
 
-        forward = self.laser_ranges_minA #returns the minimum value from the array at 0 degrees
-        frontleft = self.laser_ranges_minD #returns the minimum value from the array at 45 degrees
-        left = self.laser_ranges_minB #returns the minimum value from the array at 90 degrees
-        backleft = self.laser_ranges_minE #returns the minimum value from the array at 135 degrees
-        hangleft = 0 #counter incfementing every turn made allowing for hard stop when square is completed 
-        lanespace = 0 #stores value for the distance to the box 
-        Proximitysensor = min_ignore_None(forward, frontleft, left, backleft) #stores the value of the closest obstacle 
-
-        minDistance = 0.5 #defined value for easier editing, defines minimum distance robot should get to an object.
+        minHorzDistance = 0.5 #closest distance the side of the robot should get to the box
+        minDiagDistance = 0.7 # the max distance when going around a corner...
 	    
-        if Proximitysensor is None:
+
+        #The following check feels like there is an issue because if any of these are none it leaves the function and won't continue
+        #for the other things and also should not be an if because the later conditions are only tested if the first is not true.
+        if laser_rangesA is None:
+            self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
+            return
+        elif laser_rangesB is None:
+            self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
+            return
+        elif laser_rangesC is None:
+            self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
+            return
+        elif laser_rangesD is None:
             self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
             return
 
@@ -264,19 +260,41 @@ class NavigateSquare(Node):
         # reliable, so we might want to ignore NONEs. We also might want to select the minimum
         # range from our entire sweep.
         laser_ranges_minA = min_ignore_None(laser_rangesA) #gets smallest of read in lidar data at 0 degrees
-        laser_ranges_minB = min_ignore_None(laser_rangesB)#get smallest value from readings around 90 degrees
-        laser_ranges_minC = min_ignore_None(laser_rangesC)#get smallest value from reading around 95 degrees
+        laser_ranges_minB = min_ignore_None(laser_rangesB)#get smallest value from readings around 45 degrees
+        laser_ranges_minC = min_ignore_None(laser_rangesC)#get smallest value from reading around 90 degrees
         laser_ranges_minD = min_ignore_None(laser_rangesD)#get smallest value from reading around 135 degrees
-        laser_ranges_minE = min_ignore_None(laser_rangesE)#get smallest value from reading around 45 degrees
-        laser_ranges_minF = min_ignore_None(laser_rangesF)#get smallest value from reading around 315 degrees
-        laser_ranges_minG = min_ignore_None(laser_rangesG)#get smallest value from reading around 225 degrees
-        #all three ranges should be passed through this
+      
+        front = laser_ranges_minA
+        frontleft = laser_ranges_minB
+        left = laser_ranges_minC
+        backleft = laser_ranges_minD
+
+        #all four ranges passed through above to get minimum reading
 
         # If ALL the lidar returns are NONE, it means all returns were invalid (probably too close).
         # So only do something if the 
         #decisions to be edited
 
-	
+        if front > minHorizDistance: #if front is uncovered
+            if left > minHorizDistance: #if left side doesn't sense the box
+                if backleft > minDiagDistance:#if back left is bigger than the minimum distance diagonally
+                    msg.linear.x = self.x_vel #move forward
+                elif backleft <minDiagDistance and frontleft < minDiagDistance:# if front is clear and the front left and back left close to box
+                    msg.linear.x = self.x_vel #drive forward
+                elif backleft < minHorizDistance and frontleft > minDiagDistance: # front is clear and back has a box
+                    #slow down
+                    msg.linear.x = self.x_vel #drive forward but slowly if possible 
+                elif backleft > minHorizDistance and backleft <minDiagDistance and frontleft>minDiagDistance:#if the back is within the diagonal distance
+                    msg.angular.z = 1.0 # turn around the corner
+            elif left < minHorizDistance:
+                if frontleft > minDiagDistance and backleft < minDiagDistance:
+                    #rotate left
+                    msg.angular.z = 1.0
+                elif backleft > minHorizDistance and frontleft < minDiagDistance:
+                    #rotate right
+                    msg.angular.z = -1.0
+        elif front < minHorizDistance :
+            if left 
 
 	    
         if laser_ranges_minA > minDistance: #checks for obstacles directly infront within 0.5 m
