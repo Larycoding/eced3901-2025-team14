@@ -279,6 +279,9 @@ class NavigateSquare(Node):
             if left > minHorizDistance: #if left side doesn't sense the box
                 if backleft > minDiagDistance:#if back left is bigger than the minimum distance diagonally
                     msg.linear.x = self.x_vel #move forward
+                elif frontleft>minDiagDistance and backleft <= minDiagDistance:
+                    #check the turn condition
+                    rlclpy.shutdown() #shutdown code at end
                 elif backleft <minDiagDistance and frontleft < minDiagDistance:# if front is clear and the front left and back left close to box
                     msg.linear.x = self.x_vel #drive forward
                 elif backleft < minHorizDistance and frontleft > minDiagDistance: # front is clear and back has a box
@@ -286,7 +289,7 @@ class NavigateSquare(Node):
                     msg.linear.x = self.x_vel #drive forward but slowly if possible 
                 elif backleft > minHorizDistance and backleft <minDiagDistance and frontleft>minDiagDistance:#if the back is within the diagonal distance
                     msg.angular.z = 1.0 # turn around the corner
-            elif left < minHorizDistance:
+            elif left < minHorizDistance: # left distance less than the minimum distance
                 if frontleft > minDiagDistance and backleft < minDiagDistance:
                     #rotate left
                     msg.angular.z = 1.0
@@ -294,45 +297,10 @@ class NavigateSquare(Node):
                     #rotate right
                     msg.angular.z = -1.0
         elif front < minHorizDistance :
-            if left 
+            if left < backleft: #if turned toward
+                msg.angular.z = -1.0 #turn right
 
-	    
-        if laser_ranges_minA > minDistance: #checks for obstacles directly infront within 0.5 m
-            if Proximitysensor > minDistance:#if there is no ostacles within 0.5m in any direction continue forwards
-                msg.linear.x = self.x_vel #move forwards
-            elif Proximitysensor == frontleft: # if there is an obstacle that is at its closest 45 degrees to the left continues forwards
-                msg.linear.x = self.x_vel #move forwards
-		
-            elif Proximitysensor ==left : #if the closest obstacle is to the left continue forward
-                if lanespace ==0:
-                    lanespace = left #store closest proximity to the wall to maintain a straight drive
 
-                elif lanespace > left:
-                    msg.angular.z =1.0 # if the stored value is smaller than current proximity steer to the right
-                    #above may need edited number to ensure turning right
-
-                elif lanespace <left:
-                    msg.angular.z = -1.0 # if the stored value is larger than the current proximity steer to the left
-                    #above value may need to be changed to turn left, does it need a diff value?
-
-            msg.linear.x = self.x_vel #continue forwards
-            msg.angular.z = 0 #reset turning velocity to 0 to insure minimal oversteer
-
-        elif Proximitysensor == backleft: # code to detect when to turn
-            if Proximitysensor == math.sqrt(2*lanespace*lanespace): # will get the bot to turn when it is clear of the corner
-                #above will hopefully maintain same proximity to wall as original spacing
-
-                hangleft+= 1 # increment counter to stop when reaching the end of the square
-                msg.linear.x = 0 #forward motion stops to get a zero turn radius
-                msg.angular.z = 1.0 # turns left
-
-                if hangleft == 4:#when the counter reaches 4 the robot has completed the square
-                    rclpy.shutdown() #shut down code
-            else:
-                msg.linear.x = self.x_vel*0.5#as the robot approaches the turning point slow down to prevent late braking
-
-			
-            
 
 		#if laser_ranges_minB <0.5 and laser_ranges_minC < 0.5:
                 #drive forward
