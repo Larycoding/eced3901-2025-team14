@@ -25,6 +25,7 @@ from geometry_msgs.msg import Twist
 from sensor_msgs.msg import LaserScan
 
 from collections import deque
+import math
 
 class LaserDataInterface(object):
 
@@ -235,27 +236,27 @@ class NavigateSquare(Node):
         laser_rangesB = self.ldi.get_range_array(90.0) #range from 95 degrees to 85 degrees on the left side
         laser_rangesC = self.ldi.get_range_array(95.0) #range from 100 degrees to 90 degrees on the left side
         #create 3 ranges using above function
-	laser_rangesD = self.ldi.get_range_array(135.0) #range from 130 to 135 degrees left (was added for lab 1 to detect 
-	#the corners of the box are in optimal position to make a turn
-	laser_rangesE = self.ldi.get_range_array(45.0) #range from 40 to 50 degrees left (was added for lab1 to detect the 
-	#first corner of the box to aid in recognition of the task
-	laser_rangesF = self.ldi.get_range_array(315.0)#range from 310 to 320 degrees left (was added for lab1 to detect the 
-	#first corner of the box to aid in recognition of the task
-	laser_rangesG = self.ldi.get_range_array(225.0)#range from 220 to 230 degrees left (was added for lab 1 to detect 
-	#the corners of the box are in optimal position to make a turn
+        laser_rangesD = self.ldi.get_range_array(135.0) #range from 130 to 135 degrees left (was added for lab 1 to detect 
+	    #the corners of the box are in optimal position to make a turn
+        laser_rangesE = self.ldi.get_range_array(45.0) #range from 40 to 50 degrees left (was added for lab1 to detect the 
+	    #first corner of the box to aid in recognition of the task
+        laser_rangesF = self.ldi.get_range_array(315.0)#range from 310 to 320 degrees left (was added for lab1 to detect the 
+	    #first corner of the box to aid in recognition of the task
+        laser_rangesG = self.ldi.get_range_array(225.0)#range from 220 to 230 degrees left (was added for lab 1 to detect 
+	    #the corners of the box are in optimal position to make a turn
 	
 
-	forward = self.laser_ranges_minA #returns the minimum value from the array at 0 degrees
-	frontleft = self.laser_ranges_minD #returns the minimum value from the array at 45 degrees
-	left = self.laser_ranges_minB #returns the minimum value from the array at 90 degrees
-	backleft = self.laser_ranges_minE #returns the minimum value from the array at 135 degrees
-	hangleft = 0 #counter incfementing every turn made allowing for hard stop when square is completed 
-	lanespace = 0 #stores value for the distance to the box 
-	Proximitysensor = min_ignore_None(forward, frontleft, left, backleft) #stores the value of the closest obstacle 
+        forward = self.laser_ranges_minA #returns the minimum value from the array at 0 degrees
+        frontleft = self.laser_ranges_minD #returns the minimum value from the array at 45 degrees
+        left = self.laser_ranges_minB #returns the minimum value from the array at 90 degrees
+        backleft = self.laser_ranges_minE #returns the minimum value from the array at 135 degrees
+        hangleft = 0 #counter incfementing every turn made allowing for hard stop when square is completed 
+        lanespace = 0 #stores value for the distance to the box 
+        Proximitysensor = min_ignore_None(forward, frontleft, left, backleft) #stores the value of the closest obstacle 
 
 
 	    
-        if proximitysensor is None:
+        if Proximitysensor is None:
             self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
             return
 
@@ -265,10 +266,10 @@ class NavigateSquare(Node):
         laser_ranges_minA = min_ignore_None(laser_rangesA) #gets smallest of read in lidar data at 0 degrees
         laser_ranges_minB = min_ignore_None(laser_rangesB)#get smallest value from readings around 90 degrees
         laser_ranges_minC = min_ignore_None(laser_rangesC)#get smallest value from reading around 95 degrees
-	laser_ranges_minD = min_ignore_None(laser_rangesD)#get smallest value from reading around 135 degrees
-	laser_ranges_minE = min_ignore_None(laser_rangesE)#get smallest value from reading around 45 degrees
-	laser_ranges_minF = min_ignore_None(laser_rangesF)#get smallest value from reading around 315 degrees
-	laser_ranges_minG = min_ignore_None(laser_rangesG)#get smallest value from reading around 225 degrees
+        laser_ranges_minD = min_ignore_None(laser_rangesD)#get smallest value from reading around 135 degrees
+        laser_ranges_minE = min_ignore_None(laser_rangesE)#get smallest value from reading around 45 degrees
+        laser_ranges_minF = min_ignore_None(laser_rangesF)#get smallest value from reading around 315 degrees
+        laser_ranges_minG = min_ignore_None(laser_rangesG)#get smallest value from reading around 225 degrees
         #all three ranges should be passed through this
 
         # If ALL the lidar returns are NONE, it means all returns were invalid (probably too close).
@@ -279,49 +280,41 @@ class NavigateSquare(Node):
 
 	    
         if laser_ranges_minA > 0.5: #checks for obstacles directly infront within 0.5 m
+            if Proximitysensor >0.5:#if there is no ostacles within 0.5m in any direction continue forwards
+                msg.linear.x = self.x_vel #move forwards
+            elif Proximitysensor == frontleft: # if there is an obstacle that is at its closest 45 degrees to the left continues forwards
+                msg.linear.x = self.x_vel #move forwards
 		
-		if Proximitysensor > 0.5: # if there is no obstacles within 0.5 m in any direction continue forwards
-			
-			msg.linear.x = self.x_vel
-			
-		elif proximitysensor == frontleft: # if there is an obstacle that is at its closest 45 degrees to the left continue forwards
+            elif Proximitysensor ==left : #if the closest obstacle is to the left continue forward
+                if lanespace ==0:
+                    lanespace = left #store closest proximity to the wall to maintain a straight drive
 
-			msg.linear.x = self.x_vel
-			
-		elif proximitysensor == left: # if the closest obstacle is to the left continue forwards
-			
-			if lanespace == 0:
-				
-				lanespace = left  # store the closest proximity to the wall to maintian a straight drive
-				
-			elif lanespace > left:
-				
-				msg.angular.z = -1.0 #if the stored value is smaller than the current proximity steer to the right (hopefully)
-				#to correct the trajectory
-				
-			elif lanespace < left:
-			
-				msg.angular.z = 1.0 #if the stored value is larger than the current proximity steer to the left (hopefully)
-				#to correct the trajectory
-			
-			msg.linear.x = self.x_vel # continue forwards
-			msg.angular.z = 0 # reset turning velocity to 0 to insure minimal oversteer
-			
-		elif proximitysensor == backleft: #code to detect when to turn 
-			
-			if proximitysensor == math.sqrt(2 * lanespace * lanespace): # will get the bot to turn when it is clear of the corner and will hopefully 
-				#maintain the same proximity to the wall as the original spacing
-				
-				hangleft += 1 # increment counter to stop when reaching the end of the square
-				msg.linear.x = 0 # forward motion stops to get a 0 turn radius
-				msg.angular.z = 1.0 # turns left
-				
-				if hangleft == 4: # when the counter reaches 4 the robot has completed the square 
-					rclpy.shutdown() #end code
+                elif lanespace > left:
+                    msg.angular.z =1.0 # if the stored value is smaller than current proximity steer to the right
+                    #above may need edited number to ensure turning right
 
-	    		else
-				msg.linear.x = self.x_vel * 0.5 #as the bot approaches the turning point slow down to prevent late braking
+                elif lanespace <left:
+                    msg.angular.z = -1.0 # if the stored value is larger than the current proximity steer to the left
+                    #above value may need to be changed to turn left, does it need a diff value?
 
+            msg.linear.x = self.x_vel #continue forwards
+            msg.angular.z = 0 #reset turning velocity to 0 to insure minimal oversteer
+
+        elif Proximitysensor == backleft: # code to detect when to turn
+            if Proximitysensor == math.sqrt(2*lanespace*lanespace): # will get the bot to turn when it is clear of the corner
+                #above will hopefully maintain same proximity to wall as original spacing
+
+                hangleft+= 1 # increment counter to stop when reaching the end of the square
+                msg.linear.x = 0 #forward motion stops to get a zero turn radius
+                msg.angular.z = 1.0 # turns left
+
+                if hangleft == 4:#when the counter reaches 4 the robot has completed the square
+                    rclpy.shutdown() #shut down code
+            else:
+                msg.linear.x = self.x_vel*0.5#as the robot approaches the turning point slow down to prevent late braking
+
+			
+            
 
 		#if laser_ranges_minB <0.5 and laser_ranges_minC < 0.5:
                 #drive forward
