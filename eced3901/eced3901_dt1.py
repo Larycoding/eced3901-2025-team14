@@ -236,7 +236,7 @@ class NavigateSquare(Node):
         laser_rangesB = self.ldi.get_range_array(90.0) #range from 95 degrees to 85 degrees on the left side
         laser_rangesC = self.ldi.get_range_array(95.0) #range from 100 degrees to 90 degrees on the left side
         #create 3 ranges using above function
-        laser_rangesD = self.ldi.get_range_array(135.0) #range from 130 to 135 degrees left (was added for lab 1 to detect 
+        laser_rangesD = self.ldi.get_range_array(135.0) #range from 130 to 140 degrees left (was added for lab 1 to detect 
 	    #the corners of the box are in optimal position to make a turn
         laser_rangesE = self.ldi.get_range_array(45.0) #range from 40 to 50 degrees left (was added for lab1 to detect the 
 	    #first corner of the box to aid in recognition of the task
@@ -254,7 +254,7 @@ class NavigateSquare(Node):
         lanespace = 0 #stores value for the distance to the box 
         Proximitysensor = min_ignore_None(forward, frontleft, left, backleft) #stores the value of the closest obstacle 
 
-
+        minDistance = 0.5 #defined value for easier editing, defines minimum distance robot should get to an object.
 	    
         if Proximitysensor is None:
             self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
@@ -279,8 +279,8 @@ class NavigateSquare(Node):
 	
 
 	    
-        if laser_ranges_minA > 0.5: #checks for obstacles directly infront within 0.5 m
-            if Proximitysensor >0.5:#if there is no ostacles within 0.5m in any direction continue forwards
+        if laser_ranges_minA > minDistance: #checks for obstacles directly infront within 0.5 m
+            if Proximitysensor > minDistance:#if there is no ostacles within 0.5m in any direction continue forwards
                 msg.linear.x = self.x_vel #move forwards
             elif Proximitysensor == frontleft: # if there is an obstacle that is at its closest 45 degrees to the left continues forwards
                 msg.linear.x = self.x_vel #move forwards
