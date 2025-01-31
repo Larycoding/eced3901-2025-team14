@@ -243,18 +243,18 @@ class NavigateSquare(Node):
 
         #The following check feels like there is an issue because if any of these are none it leaves the function and won't continue
         #for the other things and also should not be an if because the later conditions are only tested if the first is not true.
-        if laser_rangesA is None:
-            self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
-            return
-        if laser_rangesB is None:
-            self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
-            return
-        if laser_rangesC is None:
-            self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
-            return
-        if laser_rangesD is None:
-            self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
-            return
+        #if laser_rangesA is None:
+         #   self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
+          #  return
+        #if laser_rangesB is None:
+         #   self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
+          #  return
+        #if laser_rangesC is None:
+         #   self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
+          #  return
+        #if laser_rangesD is None:
+         #   self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
+          #  return
 
         # This gets the minimum range, but ignores NONE values. The LIDAR data isn't always
         # reliable, so we might want to ignore NONEs. We also might want to select the minimum
@@ -274,31 +274,35 @@ class NavigateSquare(Node):
         # If ALL the lidar returns are NONE, it means all returns were invalid (probably too close).
         # So only do something if the 
         #decisions to be edited
+	if laser_rangesA and laser_rangesB and laser_rangesC and laser_rangesD is Null: #12:33 jan 31 code update larrisa's suggestion
+		msg.linear.x = self.x-vel#12:33 jan 31 code update larrisa's suggestion
 
-        if front > minHorizDistance: #if front is uncovered
-            if left > minHorizDistance: #if left side doesn't sense the box
-                if backleft > minDiagDistance:#if back left is bigger than the minimum distance diagonally
-                    msg.linear.x = self.x_vel #move forward
-                elif frontleft>minDiagDistance and backleft <= minDiagDistance:
-                    #check the turn condition
-                    rclpy.shutdown() #shutdown code at end
-                elif backleft <minDiagDistance and frontleft < minDiagDistance:# if front is clear and the front left and back left close to box
-                    msg.linear.x = self.x_vel #drive forward
-                elif backleft < minHorizDistance and frontleft > minDiagDistance: # front is clear and back has a box
-                    #slow down
-                    msg.linear.x = self.x_vel #drive forward but slowly if possible 
-                elif backleft > minHorizDistance and backleft <minDiagDistance and frontleft>minDiagDistance:#if the back is within the diagonal distance
-                    msg.angular.z = 1.0 # turn around the corner
-            elif left < minHorizDistance: # left distance less than the minimum distance
-                if frontleft > minDiagDistance and backleft < minDiagDistance:
-                    #rotate left
-                    msg.angular.z = 1.0
-                elif backleft > minHorizDistance and frontleft < minDiagDistance:
-                    #rotate right
-                    msg.angular.z = -1.0
-        elif front < minHorizDistance :
-            if float(left) < float(backleft): #if turned toward
-                msg.angular.z = -1.0 #turn right
+	else:#12:33 jan 31 code update larrisa's suggestion
+
+        	if front > minHorizDistance or front is None: #if front is uncovered #12:33 jan 31 code update larrisa's suggestion to fix None value issues
+            		if left > minHorizDistance or left is None: #if left side doesn't sense the box #12:33 jan 31 code update larrisa's suggestion to fix None value issues
+                		if backleft > minDiagDistance:#if back left is bigger than the minimum distance diagonally
+                    			msg.linear.x = self.x_vel #move forward
+                		elif frontleft>minDiagDistance and backleft <= minDiagDistance:
+                    			#check the turn condition
+                    			rclpy.shutdown() #shutdown code at end
+                		elif backleft <minDiagDistance and frontleft < minDiagDistance:# if front is clear and the front left and back left close to box
+                    			msg.linear.x = self.x_vel #drive forward
+                		elif backleft < minHorizDistance and frontleft > minDiagDistance: # front is clear and back has a box
+                    			#slow down
+                    			msg.linear.x = self.x_vel #drive forward but slowly if possible 
+                		elif backleft > minHorizDistance and backleft <minDiagDistance and frontleft>minDiagDistance:#if the back is within the diagonal distance
+                    			msg.angular.z = 1.0 # turn around the corner
+            		elif left < minHorizDistance or left is None: # left distance less than the minimum distance #12:33 jan 31 code update larrisa's suggestion to fix None value issues
+                		if frontleft > minDiagDistance and backleft < minDiagDistance:
+                   		 #rotate left
+                    			msg.angular.z = 1.0
+                		elif backleft > minHorizDistance and frontleft < minDiagDistance:
+                    			#rotate right
+                    			msg.angular.z = -1.0
+        	elif front < minHorizDistance :
+            		if float(left) < float(backleft): #if turned toward
+                		msg.angular.z = -1.0 #turn right
 
 
 
