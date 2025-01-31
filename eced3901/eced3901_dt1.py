@@ -237,7 +237,7 @@ class NavigateSquare(Node):
         laser_rangesC = self.ldi.get_range_array(90.0) #range from 85 degrees to 95 degrees on the left side
         laser_rangesD = self.ldi.get_range_array(135.0) #range from 130 to 140 degrees left (was added for lab 1 to detect 
 
-        minHorzDistance = 0.5 #closest distance the side of the robot should get to the box
+        minHorizDistance = 0.5 #closest distance the side of the robot should get to the box
         minDiagDistance = 0.7 # the max distance when going around a corner...
 	    
 
@@ -281,7 +281,7 @@ class NavigateSquare(Node):
                     msg.linear.x = self.x_vel #move forward
                 elif frontleft>minDiagDistance and backleft <= minDiagDistance:
                     #check the turn condition
-                    rlclpy.shutdown() #shutdown code at end
+                    rclpy.shutdown() #shutdown code at end
                 elif backleft <minDiagDistance and frontleft < minDiagDistance:# if front is clear and the front left and back left close to box
                     msg.linear.x = self.x_vel #drive forward
                 elif backleft < minHorizDistance and frontleft > minDiagDistance: # front is clear and back has a box
