@@ -274,7 +274,7 @@ class NavigateSquare(Node):
         # If ALL the lidar returns are NONE, it means all returns were invalid (probably too close).
         # So only do something if the 
         #decisions to be edited
-	if laser_rangesA and laser_rangesB and laser_rangesC and laser_rangesD is Null: #12:33 jan 31 code update larrisa's suggestion
+	if laser_rangesA and laser_rangesB and laser_rangesC and laser_rangesD is None: #12:33 jan 31 code update larrisa's suggestion
 		msg.linear.x = self.x-vel#12:33 jan 31 code update larrisa's suggestion
 
 	else:#12:33 jan 31 code update larrisa's suggestion
