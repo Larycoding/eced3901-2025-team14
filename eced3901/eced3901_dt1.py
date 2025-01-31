@@ -246,13 +246,13 @@ class NavigateSquare(Node):
         if laser_rangesA is None:
             self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
             return
-        elif laser_rangesB is None:
+        if laser_rangesB is None:
             self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
             return
-        elif laser_rangesC is None:
+        if laser_rangesC is None:
             self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
             return
-        elif laser_rangesD is None:
+        if laser_rangesD is None:
             self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
             return
 
@@ -297,7 +297,7 @@ class NavigateSquare(Node):
                     #rotate right
                     msg.angular.z = -1.0
         elif front < minHorizDistance :
-            if left < backleft: #if turned toward
+            if float(left) < float(backleft): #if turned toward
                 msg.angular.z = -1.0 #turn right
 
 
