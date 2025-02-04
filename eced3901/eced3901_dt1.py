@@ -26,6 +26,7 @@ from sensor_msgs.msg import LaserScan
 
 from collections import deque
 import math
+import time
 
 class LaserDataInterface(object):
 
@@ -138,11 +139,13 @@ class LaserDataInterface(object):
 
 def noneIsInfinite(value):
     if value is None:
-        return float("inf")
+        return math.inf
     else:
         return value
 
 def min_ignore_None(data):
+    if not data:
+        return math.inf
     return min(data, key=noneIsInfinite)
 
 class NavigateSquare(Node):
@@ -171,6 +174,7 @@ class NavigateSquare(Node):
         self.y_init = 0.0
         self.d_now = 0.0
         self.d_aim = 1.0
+        self.i = 0
 
         self.laser_range = None
 
@@ -208,21 +212,62 @@ class NavigateSquare(Node):
 
         msg = Twist()
         # This has two fields:
-        # msg.linear.x
-        # msg.angular.z
+        msg.linear.x
+        msg.angular.z
 		        	
 		# Calculate distance travelled from initial
-        self.d_now = pow( pow(self.x_now - self.x_init, 2) + pow(self.y_now - self.y_init, 2), 0.5 )
+        self.d_now = pow( pow(self.x_now - self.x_init + 0.3, 2) + pow(self.y_now - self.y_init, 2), 0.5 )
 
         if self.d_now < self.d_aim:
-            msg.linear.x = self.x_vel
-            msg.angular.z = 0.0            
+            #msg.linear.x = self.x_vel
+            #msg.angular.z = 0.0     
+            return       
         else:
             msg.linear.x = 0.0 # //double(rand())/double(RAND_MAX); //fun
             msg.angular.z = 0.0 # //2*double(rand())/double(RAND_MAX) - 1; //fun
 
         self.pub_vel.publish(msg)
-        self.get_logger().info("Sent: " + str(msg))    
+        self.get_logger().info("Sent: " + str(msg))  
+
+    def hard_left_turn(self):
+        msg = Twist()
+        msg.angular.z = 1.0 # sets angular velocity to 1 for a 90 degree turn
+        msg.linear.x = self.x_vel # keeps linear velocity and creates a larger turn radius
+        self.pub_vel.publish(msg) # Publishes data to motors so pascal doesnt stop moving
+        start_time = time.time() #initializes a time variable
+        while time.time() - start_time < 0.13:  # Keep turning for 0.13 seconds using the time variable
+            self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
+            time.sleep(0.1) # sleeps for 0.1s to avoid conflicting commands
+
+    def micro_left(self):
+        msg = Twist()
+        msg.angular.z = 0.2 # sets angular velocity to 1 for a slight left turn
+        msg.linear.x = self.x_vel * 0.1 # keeps linear velocity and creates a larger turn radius
+        self.pub_vel.publish(msg) # Publishes data to motors so pascal doesnt stop moving
+        start_time = time.time() #initializes a time variable
+        while time.time() - start_time < 0.1:  # Keep turning for 0.1 seconds
+            self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
+            time.sleep(0.1)  # sleeps for 0.1s to avoid conflicting commands
+
+    def micro_right(self):
+        msg = Twist()
+        msg.angular.z = -0.2 # sets angular velocity to 1 for a slight right turn
+        msg.linear.x = self.x_vel * 0.1 # keeps linear velocity and creates a larger turn radius
+        self.pub_vel.publish(msg) # Publishes data to motors so pascal doesnt stop moving
+        start_time = time.time()  #initializes a time variable
+        while time.time() - start_time < 0.1:  # Keep turning for 0.1 seconds
+            self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
+            time.sleep(0.1)   # sleeps for 0.1s to avoid conflicting commands
+
+    def turn_around(self):
+        msg = Twist()
+        msg.angular.z = 1.0 # sets angular velocity to 1 for a 180 degree turn
+        self.pub_vel.publish(msg) # Publishes data to motors so pascal doesnt stop moving
+        start_time = time.time()  #initializes a time variable
+        while time.time() - start_time < 0.25:  # Keep turning for 0.25 seconds
+            self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
+            time.sleep(0.1)    # sleeps for 0.1s to avoid conflicting commands
+
 
     def control_example_lidar(self):
         """ Control example using LIDAR"""
@@ -231,18 +276,26 @@ class NavigateSquare(Node):
         # msg.linear.x
         # msg.angular.z	 	       	
         #either here until after decisions or this fuction call needs to be repeated in a while or for loop.
-        laser_rangesA = self.ldi.get_range_array(0.0)#asks for specific array data..forward plus a few degrees
+        laser_rangesA = self.ldi.get_range_array(-21.0)#asks for specific array data..forward plus a few degrees
         #may need to reduce the range because it may be too far back with the offset
-        laser_rangesB = self.ldi.get_range_array(45.0) #range from 40 degrees to 50 degrees on the left side
-        laser_rangesC = self.ldi.get_range_array(90.0) #range from 85 degrees to 95 degrees on the left side
-        laser_rangesD = self.ldi.get_range_array(135.0) #range from 130 to 140 degrees left (was added for lab 1 to detect 
+        #Note lidar was offset by approximately 21 degrees degree ranges were adjusted for this offset
+        laser_rangesB = self.ldi.get_range_array(24.0) #range from 40 degrees to 50 degrees on the left side
+        laser_rangesC = self.ldi.get_range_array(69.0) #range from 85 degrees to 95 degrees on the left side
+        laser_rangesD = self.ldi.get_range_array(114.0) #range from 130 to 140 degrees left (was added for lab 1 to detect 
+        laser_rangesE = self.ldi.get_range_array(84.0) #range from 100 to 110 degreees to the left hand side
+        laser_rangesF = self.ldi.get_range_array(54.0) #range from 70 to 80 degrees to the left
 
-        minHorizDistance = 0.5 #closest distance the side of the robot should get to the box
-        minDiagDistance = 0.7 # the max distance when going around a corner...
+        #lidar apears to be 21 degrees off center (not sure how to fix  it but quick fix is shifting 21 degrees)
+
+        minHorizDistance = 0.4 #closest distance the side of the robot should get to the box (updated from testing)
+        minDiagDistance = 0.5# the max distance when going around a corner...(updated from testing)
 	    
 
         #The following check feels like there is an issue because if any of these are none it leaves the function and won't continue
         #for the other things and also should not be an if because the later conditions are only tested if the first is not true.
+
+        #Kept for potential future use
+
         #if laser_rangesA is None:
            # self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
             #return
@@ -259,15 +312,21 @@ class NavigateSquare(Node):
         # This gets the minimum range, but ignores NONE values. The LIDAR data isn't always
         # reliable, so we might want to ignore NONEs. We also might want to select the minimum
         # range from our entire sweep.
-        laser_ranges_minA = min_ignore_None(laser_rangesA) #gets smallest of read in lidar data at 0 degrees
-        laser_ranges_minB = min_ignore_None(laser_rangesB)#get smallest value from readings around 45 degrees
-        laser_ranges_minC = min_ignore_None(laser_rangesC)#get smallest value from reading around 90 degrees
-        laser_ranges_minD = min_ignore_None(laser_rangesD)#get smallest value from reading around 135 degrees
-      
+        laser_ranges_minA = min_ignore_None(laser_rangesA) #or []#gets smallest of read in lidar data at 0 degrees
+        laser_ranges_minB = min_ignore_None(laser_rangesB) #or []#get smallest value from readings around 45 degrees
+        laser_ranges_minC = min_ignore_None(laser_rangesC) #or []#get smallest value from reading around 90 degrees
+        laser_ranges_minD = min_ignore_None(laser_rangesD) #or [] #get smallest value from reading around 135 degrees
+        laser_ranges_minE = min_ignore_None(laser_rangesE) #or [] #get smallest value from reading around 105 degrees
+        laser_ranges_minF = min_ignore_None(laser_rangesF) #or [] #get smallest value from reading around 85 degrees
+
         front = laser_ranges_minA
         frontleft = laser_ranges_minB
         left = laser_ranges_minC
         backleft = laser_ranges_minD
+        backleftleft = laser_ranges_minE
+        frontleftleft = laser_ranges_minF
+        
+
 
         #all four ranges passed through above to get minimum reading
 
@@ -276,64 +335,105 @@ class NavigateSquare(Node):
         #decisions to be edited
 
         #Refer to external sheet for logic breakdown by situation
-        # or None statements added to 286,288,291,293,296,299
+        # or None statements added to 286,288,291,293,296,299 # code has drastically changed since this
+        #self.control_example_odom(self)
 
 
-        if laser_rangesA and laser_rangesB and laser_rangesC and laser_rangesD is None: 
-            msg.linear.x = self.x_vel
+        if laser_rangesA and laser_rangesB and laser_rangesC and laser_rangesD is None: # catch statement to aid in filtering out None values 
+            msg.linear.x = self.x_vel # if all values are None go forward
 
-        else:
+        else:  # All the print commands are for use in the console to leave a record of what sections of code are triggering. useful for adjustments
 
-            if (front > minHorizDistance) or (front == None): #if front is uncovered / modified by Behnam 
-                if (left > minHorizDistance) or (left == None): #if left side doesn't sense the box
-                    if backleft > minDiagDistance or (backleft == None):#if back left is bigger than the minimum distance diagonally
+            if ((frontleft) > (minHorizDistance)) or (frontleft == None): #if frontleft is uncovered / modified by Behnam 
+                print("1")
+                if ((left) > minHorizDistance) or (left == None): #if left side doesn't sense the box
+                    print("2")
+                    if (backleft) > minDiagDistance or (backleft == None):#if back left is bigger than the minimum distance diagonally
                         msg.linear.x = self.x_vel #move forward
-                    #elif (frontleft>minDiagDistance or frontleft == None) and backleft <= minDiagDistance:# uncommented by behnam
-                        #check the turn condition
-                        #rclpy.shutdown() #shutdown code at end/ uncomented by behnam
-                    elif backleft <minDiagDistance and frontleft < minDiagDistance :# if front is clear and the front left and back left close to box
+                        print("3")
+
+                    elif (left) > minDiagDistance: #if pascal has exceeded the maximum range of 0.5 turn to the left to close distance
+                        print("16")
+                        self.micro_left() 
+
+                    elif ((frontleft) > minDiagDistance or frontleft == None) and (backleft) < minDiagDistance:
+                        
+                        self.micro_left() #micro adjust with left hand turn
+                        print("4")
+
+                    elif (backleft) <minDiagDistance and (frontleft) < minDiagDistance :# if front is clear and the front left and back left close to box
                         msg.linear.x = self.x_vel #drive forward
-                    elif backleft < minHorizDistance and (frontleft > minDiagDistance or frontleft == None) and (left > minDiagDistance or left == None): # front is clear and back has a box 
+                        print("6")
+
+                    elif backleft < minHorizDistance and (frontleft > minDiagDistance or frontleft == None) and ((left) > minDiagDistance or left == None): # front is clear and back has a box 
                         #Added additional condition to detect box to the left of robot [James] #slow down
-                        msg.linear.x = self.x_vel * 0.5 #drive forward but slowly if possible 
-                    elif backleft > minHorizDistance and backleft <minDiagDistance and (frontleft>minDiagDistance or frontleft == None):#if the back is within the diagonal distance
-                        msg.angular.z = 1.0 # turn around the corner
-                elif (left < minHorizDistance): # left distance less than the minimum distance /modified by Behnam
-                    if (frontleft > minDiagDistance or frontleft == None) and backleft < minDiagDistance:
-                        #rotate left
-                        msg.angular.z = 1.0
-                    elif (backleft > minHorizDistance or None) and frontleft < minDiagDistance:
-                        #rotate right
-                        msg.angular.z = -1.0
-            elif (front < minHorizDistance) or (front == None): #modified by Behnam
-                if float(left) < float(backleft): #if turned toward
-                    msg.angular.z = -1.0 #turn right
+                        msg.linear.x = self.x_vel  #drive forward but slowly if possible 
+                        print("7")
+
+                    #elif backleft > minHorizDistance and backleft <minDiagDistance and (frontleft>minDiagDistance or frontleft == None):#if the back is within the diagonal distance
+                    elif ((left) > minDiagDistance or left == None) and ((frontleft)>minDiagDistance or frontleft == None): # if the pascal has enough space to the 
+                        #left and he satifies the conditions for a left hand turn it will complete the entire 90 degree turn at once 
+                        self.hard_left_turn()
+                        print("8")
+
+                    else:
+                        print("error 2") #for troubleshooting errors
 
 
+                elif ((left) < minHorizDistance): # left distance less than the minimum distance /modified by Behnam
+                    print("9")
 
-		#if laser_ranges_minB <0.5 and laser_ranges_minC < 0.5:
-                #drive forward
-                	#msg.linear.x = self.x_vel
-            	#elif laser_ranges_minB > 0.5 and laser_ranges_minC>0.5:
-                #if nothing in front or beside it on the left drive forward
-                	#msg.linear.x = self.x_vel
-            	#elif laser_ranges_minB > 0.5 and laser_ranges_minC <0.5:
-                #turn
-                	#msg.angular.z = 1.0
-            	#elif laser_ranges_minB <0.5 and laser_ranges_minC >0.5:
-                #drive forward
-                	#msg.linear.x = self.x_vel
-        	#elif laser_ranges_minA < 0.5:
-            #stop and turn?
-            	#if laser_ranges_minB<0.5 and laser_ranges_minC<0.5:
-                	#msg.angular.z = 1.0 #turn maybe negative to turn other way
+                    if (frontleft < minDiagDistance): #If the front left ie(45 deg) is within 0.4 use the folowing code to navigate along the wall
+                    
+
+                        if (frontleft) == (backleft): #if both the front left ie(45 deg) and backleft ie(135) are equal pascalw ill continue forwards
+                            print("10")
+                            msg.linear.x = self.x_vel
 
 
-        # Old if statements
-       # if laser_ranges_min and laser_ranges_min > 0.5: 
-        #    msg.linear.x = self.x_vel
-       # elif laser_ranges_min and laser_ranges_min < 0.5:
-         #   msg.angular.z = 1.0 #edit potentially for 90 degree turn or turn until certain value using decision
+                        if (frontleft) > (backleft) : #if the front left ie(45 deg) is greater than backleft ie(135 deg) pascal will adjust left
+                            print("11")
+                            self.micro_left()
+
+
+                        elif (frontleft) < (backleft) or backleft == None: #if the front left ie(45 deg) is less than backleft ie(135 deg) pascal will adjust right
+                            print("12")
+                            self.micro_right()
+
+                    else: # if pascal is approaching the corner and the front left ie(45 deg) is a None value or a large value it will trigger the use of 
+                        #frontleftleft ie (105 deg) and backleftleft ie(75 deg)
+
+
+                        if (frontleftleft) == (backleftleft):#if both the front left ie(45 deg) and backleft ie(135) are equal pascalw ill continue forwards
+                            print("21")
+                        
+                            msg.linear.x = self.x_vel
+
+
+                        if (frontleftleft) > (backleftleft) : #if the front left ie(45 deg) is greater than backleft ie(135 deg) pascal will adjust left
+                            self.micro_left()
+                            print("22")
+
+
+                        elif (frontleftleft) < (backleftleft) or backleftleft == None: #if the front left ie(45 deg) is less than backleft ie(135 deg) pascal will adjust right
+                            print("23")
+                            self.micro_right()
+                    
+
+            elif (float(frontleft) < minHorizDistance) :#or (front == None): #modified by Behnam
+                print("13")
+                self.micro_right()
+                #if float(left) < float(backleft): #if turned toward
+                 #   print("14")
+                  #  msg.angular.z = -1.0 #turn right
+
+            elif (float(front) < minHorizDistance):
+                print("wall")
+                self.turn_around()
+
+            else:
+                print ("error 1")
+
 
         self.pub_vel.publish(msg)
         self.get_logger().info("Sent: " + str(msg))      
@@ -344,7 +444,16 @@ class NavigateSquare(Node):
         #self.get_logger().info(f'Timer hit')
 
         #self.control_example_odom()
+        
         self.control_example_lidar()  #switched to lidar from lab instruction, keep odom commented out unless using
+        self.get_logger().info("===========: " + str(self.y_now))  
+
+        if self.y_now < -0.2:
+            self.i =1
+        if self.i and self.y_now > -0.1:
+            self.x_vel = 0
+            rclpy.shutdown()
+
 
     def odom_callback(self, msg):
         """Callback on 'odom' subscription"""
@@ -375,16 +484,14 @@ class NavigateSquare(Node):
 
 def main(args=None):
     rclpy.init(args=args)
-
     navigate_square = NavigateSquare()
-    while True:
-        rclpy.spin(navigate_square)
+    rclpy.spin(navigate_square)
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
     # when the garbage collector destroys the node object)
-        navigate_square.destroy_node()
-        rclpy.shutdown()
+    navigate_square.destroy_node()
+    rclpy.shutdown()
 
 
 if __name__ == '__main__':
