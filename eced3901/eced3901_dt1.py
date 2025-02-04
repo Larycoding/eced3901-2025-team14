@@ -229,7 +229,7 @@ class NavigateSquare(Node):
         msg = Twist()
         # This has two fields:
         # msg.linear.x
-        # msg.angular.z		        	
+        # msg.angular.z	 	       	
         #either here until after decisions or this fuction call needs to be repeated in a while or for loop.
         laser_rangesA = self.ldi.get_range_array(0.0)#asks for specific array data..forward plus a few degrees
         #may need to reduce the range because it may be too far back with the offset
@@ -243,18 +243,18 @@ class NavigateSquare(Node):
 
         #The following check feels like there is an issue because if any of these are none it leaves the function and won't continue
         #for the other things and also should not be an if because the later conditions are only tested if the first is not true.
-        if laser_rangesA is None:
-            self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
-            return
-        if laser_rangesB is None:
-            self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
-            return
-        if laser_rangesC is None:
-            self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
-            return
-        if laser_rangesD is None:
-            self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
-            return
+        #if laser_rangesA is None:
+           # self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
+            #return
+        #if laser_rangesB is None:
+            #self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
+            #return
+        #if laser_rangesC is None:
+            #self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
+            #return
+        #if laser_rangesD is None:
+            #self.get_logger().warning("Invalid range data, skipping, see if solves itself...")
+            #return
 
         # This gets the minimum range, but ignores NONE values. The LIDAR data isn't always
         # reliable, so we might want to ignore NONEs. We also might want to select the minimum
@@ -275,30 +275,39 @@ class NavigateSquare(Node):
         # So only do something if the 
         #decisions to be edited
 
-        if front > minHorizDistance: #if front is uncovered
-            if left > minHorizDistance: #if left side doesn't sense the box
-                if backleft > minDiagDistance:#if back left is bigger than the minimum distance diagonally
-                    msg.linear.x = self.x_vel #move forward
-                elif frontleft>minDiagDistance and backleft <= minDiagDistance:
-                    #check the turn condition
-                    rclpy.shutdown() #shutdown code at end
-                elif backleft <minDiagDistance and frontleft < minDiagDistance:# if front is clear and the front left and back left close to box
-                    msg.linear.x = self.x_vel #drive forward
-                elif backleft < minHorizDistance and frontleft > minDiagDistance: # front is clear and back has a box
-                    #slow down
-                    msg.linear.x = self.x_vel #drive forward but slowly if possible 
-                elif backleft > minHorizDistance and backleft <minDiagDistance and frontleft>minDiagDistance:#if the back is within the diagonal distance
-                    msg.angular.z = 1.0 # turn around the corner
-            elif left < minHorizDistance: # left distance less than the minimum distance
-                if frontleft > minDiagDistance and backleft < minDiagDistance:
-                    #rotate left
-                    msg.angular.z = 1.0
-                elif backleft > minHorizDistance and frontleft < minDiagDistance:
-                    #rotate right
-                    msg.angular.z = -1.0
-        elif front < minHorizDistance :
-            if float(left) < float(backleft): #if turned toward
-                msg.angular.z = -1.0 #turn right
+        #Refer to external sheet for logic breakdown by situation
+        # or None statements added to 286,288,291,293,296,299
+
+
+        if laser_rangesA and laser_rangesB and laser_rangesC and laser_rangesD is None: 
+            msg.linear.x = self.x_vel
+
+        else:
+
+            if (front > minHorizDistance) or (front == None): #if front is uncovered / modified by Behnam 
+                if (left > minHorizDistance) or (left == None): #if left side doesn't sense the box
+                    if backleft > minDiagDistance or (backleft == None):#if back left is bigger than the minimum distance diagonally
+                        msg.linear.x = self.x_vel #move forward
+                    #elif (frontleft>minDiagDistance or frontleft == None) and backleft <= minDiagDistance:# uncommented by behnam
+                        #check the turn condition
+                        #rclpy.shutdown() #shutdown code at end/ uncomented by behnam
+                    elif backleft <minDiagDistance and frontleft < minDiagDistance :# if front is clear and the front left and back left close to box
+                        msg.linear.x = self.x_vel #drive forward
+                    elif backleft < minHorizDistance and (frontleft > minDiagDistance or frontleft == None) and (left > minDiagDistance or left == None): # front is clear and back has a box 
+                        #Added additional condition to detect box to the left of robot [James] #slow down
+                        msg.linear.x = self.x_vel * 0.5 #drive forward but slowly if possible 
+                    elif backleft > minHorizDistance and backleft <minDiagDistance and (frontleft>minDiagDistance or frontleft == None):#if the back is within the diagonal distance
+                        msg.angular.z = 1.0 # turn around the corner
+                elif (left < minHorizDistance): # left distance less than the minimum distance /modified by Behnam
+                    if (frontleft > minDiagDistance or frontleft == None) and backleft < minDiagDistance:
+                        #rotate left
+                        msg.angular.z = 1.0
+                    elif (backleft > minHorizDistance or None) and frontleft < minDiagDistance:
+                        #rotate right
+                        msg.angular.z = -1.0
+            elif (front < minHorizDistance) or (front == None): #modified by Behnam
+                if float(left) < float(backleft): #if turned toward
+                    msg.angular.z = -1.0 #turn right
 
 
 
@@ -368,14 +377,14 @@ def main(args=None):
     rclpy.init(args=args)
 
     navigate_square = NavigateSquare()
-
-    rclpy.spin(navigate_square)
+    while True:
+        rclpy.spin(navigate_square)
 
     # Destroy the node explicitly
     # (optional - otherwise it will be done automatically
     # when the garbage collector destroys the node object)
-    navigate_square.destroy_node()
-    rclpy.shutdown()
+        navigate_square.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':
