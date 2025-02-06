@@ -130,7 +130,8 @@ class NavigateSquare(Node):
         """Timer callback for 10Hz control loop"""
 
         #self.get_logger().info(f'Timer hit')
-
+        adc = self.sensor.read_adc() #read in adc value
+        self.x_vel = adc/4095*0.4 #max value scaled and adjusted for speed
         msg = self.control_example_odom()
 
         if msg.linear.x == 0:
@@ -140,7 +141,7 @@ class NavigateSquare(Node):
 
         self.pub_vel.publish(msg)
         self.get_logger().info("Sent: " + str(msg))
-        self.get_logger().info("ADC: " + str(self.sensor.read_adc()))
+        self.get_logger().info("ADC: " + str(adc)) #edited because adc is the read in value
 
     def odom_callback(self, msg):
         """Callback on 'odom' subscription"""
