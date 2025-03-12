@@ -2,8 +2,8 @@
 # 
 # Authors: Larissa Lemoine, Behnam Nazari, James Hillaby
 # This program is written for the ECED 3901 class robo heist. 
-# The program is written for Group 14.
-# 
+# The program is written for Group 14.Members: Larissa Lemoine,
+# Behnam Nazari,James Hillaby, Lyndsay Robar
 # Robot Name: Pascal
 # Date: March 12, 2025
 #
@@ -28,22 +28,26 @@ import time
 from eced3901_dt1.py import LaserDataInterface
 
 #New class based on the Navigate square class in eced3901_dt1.py file.
+#potential functions/other things to add
+# - turn 90(added)
+# - turn other 90, potentially merge with above with entering negative/positive value
+# - compare lidar
+# - drive forward(distance specific? Time specific?)
+# - check map cells function
+# - turn fully around
+# - back up?
+# - waypoint array(txt file read in maybe)
+# - map (txt read in, array)
+# 
 class NavigateCourse(Node):
      #initialization taken and edited from navigate square
-     def __init__(self):
+    def __init__(self):
         #This calls the initilization function of the base Node class
         super().__init__('navigate_square')
-
-        # We can either create variables here by declaring them
-        # as part of the 'self' class, or we could declare them
-        # earlier as part of the class itself. I find it easier
-        # to declare them here
-
         # Ensure these are obviously floating point numbers and not
         # integers (python is loosely typed)
 
-        # WARNING: Check for updates, note this is set and will run backwards
-        #          on the physical model but correctly in simulation.
+        #Velocity negative for forward driving velocity, backwards in simulation
         self.x_vel = -0.2 # velocity changed to correct value for robot not simulation
 
         self.x_now = 0.0
@@ -84,4 +88,16 @@ class NavigateCourse(Node):
         self.ldi = LaserDataInterface(logger=self.get_logger())
 
         self.timer = self.create_timer(0.1, self.timer_callback)
+    #function created by James
+    def hard_left_turn(self):
+        msg = Twist()
+        msg.angular.z = 1.0 # sets angular velocity to 1 for a 90 degree turn
+        # !!! Potentially edit so that pascal stops...
+        msg.linear.x = self.x_vel # keeps linear velocity and creates a larger turn radius
+        self.pub_vel.publish(msg) # Publishes data to motors so pascal doesnt stop moving
+        start_time = time.time() #initializes a time variable
+        while time.time() - start_time < 0.13:  # Keep turning for 0.13 seconds using the time variable
+            self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
+            time.sleep(0.1) # sleeps for 0.1s to avoid conflicting commands
+    
 
