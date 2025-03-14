@@ -39,6 +39,7 @@ from eced3901_dt1.py import LaserDataInterface
 # - waypoint array(txt file read in maybe)
 # - map (txt read in, array)
 # - read map function
+# - Update position on map
 # 
 # Functions from previous navigation file
 def noneIsInfinite(value):
