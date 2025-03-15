@@ -128,6 +128,14 @@ class Demo(Node):
 
         self.pub_vel.publish(msg)
         self.get_logger().info("Sent: " + str(msg))
+    def turn_around(self):
+        msg = Twist()
+        msg.angular.z = 1.0 # sets angular velocity to 1 for a 180 degree turn
+        self.pub_vel.publish(msg) # Publishes data to motors so pascal doesnt stop moving
+        start_time = time.time()  #initializes a time variable
+        while time.time() - start_time < 0.25:  # Keep turning for 0.25 seconds
+            self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
+            time.sleep(0.1)    # sleeps for 0.1s to avoid conflicting commands
     def control_example_lidar(self):
         """ Control example using LIDAR"""
         msg = Twist()
@@ -143,6 +151,7 @@ class Demo(Node):
         laser_rangesD = self.ldi.get_range_array(114.0) #range from 130 to 140 degrees left (was added for lab 1 to detect 
         laser_rangesE = self.ldi.get_range_array(84.0) #range from 100 to 110 degreees to the left hand side
         laser_rangesF = self.ldi.get_range_array(54.0) #range from 70 to 80 degrees to the left
+        laser_rangesG = self.ldi.get_range_array(159.0) #range from 170 to 180 degrees so back
 
         #lidar apears to be 21 degrees off center (not sure how to fix  it but quick fix is shifting 21 degrees)
 
@@ -159,13 +168,53 @@ class Demo(Node):
         laser_ranges_minD = min_ignore_None(laser_rangesD) #or [] #get smallest value from reading around 135 degrees
         laser_ranges_minE = min_ignore_None(laser_rangesE) #or [] #get smallest value from reading around 105 degrees
         laser_ranges_minF = min_ignore_None(laser_rangesF) #or [] #get smallest value from reading around 85 degrees
-
+        Back = min_ignore_None(laser_rangesG) # get the smallest value from reading around 180 degrees
         if self.type is 'safe':
             #drive forward until lidar is correct value
+            #forward driving for safe cracker
             if Front > 0.16:
-                self.x_init
+                self.x_vel = 0.1
             else:
                 self.x_vel = 0
+        elif self.type is 'coins':
+            #drive forward until wall
+            #portion for collecting coins demo
+            if Front > 0.22:
+                self.x_vel = 0.3
+            else:
+                self.x_vel = 0 
+            #do a third range to slow down
+        elif self.type is 'cage':
+            #collecting coin from cage, !!!may need adjustment
+            #for now drive forward for passive collection system
+            if Front > 0.20:
+                self.x_vel = 0.1
+            else:
+                self.x_vel = 0
+        elif self.type is 'reed':
+            if Front > 0.20:
+                self.x_vel = -0.1
+            else:
+                self.x_vel = 0
+        elif self.type is 'rfid':
+            if Front > 0.20:
+                self.x_vel = 0.1
+            elif Front <= 0.20:
+                self.x_vel = 0
+                self.turn_around()
+                self.x_vel = 0.1
+            elif Back < 0.40 and Back > 0.20:
+                self.x_vel = 0
+        elif self.type is 'laser beam':
+            # drive forward then drive back
+            if Front < 0.3:
+                self.x_vel = 0.1
+            else:
+                self.x_vel = 0
+    
+
+            
+
 
     def timer_callback(self):
         """Timer callback for 10Hz control loop"""
