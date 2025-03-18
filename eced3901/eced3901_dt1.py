@@ -355,7 +355,7 @@ class NavigateSquare(Node):
             else:
                 self.x_vel = 0 
             #do a third range to slow down
-        elif self.type is 'cage':
+        elif self.type == 'cage':
             #collecting coin from cage, !!!may need adjustment
             #for now drive forward for passive collection system
             if Front > 0.20:
@@ -367,7 +367,7 @@ class NavigateSquare(Node):
                 self.x_vel = -0.1
             else:
                 self.x_vel = 0
-        elif self.type is "rfid":
+        elif self.type == "rfid":
             if Front > 0.20:
                 self.x_vel = 0.1
             elif Front <= 0.20:
