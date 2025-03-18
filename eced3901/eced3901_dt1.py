@@ -174,7 +174,7 @@ class NavigateSquare(Node):
         self.y_init = 0.0
         self.d_now = 0.0
         self.d_aim = 1.0
-        self.type = 'rfid'
+        self.type = "rfid"
 
         self.laser_range = None
 
@@ -367,7 +367,7 @@ class NavigateSquare(Node):
                 self.x_vel = -0.1
             else:
                 self.x_vel = 0
-        elif self.type is 'rfid':
+        elif self.type is "rfid":
             if Front > 0.20:
                 self.x_vel = 0.1
             elif Front <= 0.20:
