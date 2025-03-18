@@ -219,8 +219,8 @@ class NavigateSquare(Node):
         self.d_now = pow( pow(self.x_now - self.x_init + 0.3, 2) + pow(self.y_now - self.y_init, 2), 0.5 )
 
         if self.d_now < self.d_aim:
-            #msg.linear.x = self.x_vel
-            #msg.angular.z = 0.0     
+            msg.linear.x = self.x_vel
+            msg.angular.z = 0.0     
             return       
         else:
             msg.linear.x = 0.0 # //double(rand())/double(RAND_MAX); //fun
@@ -340,7 +340,6 @@ class NavigateSquare(Node):
         #self.control_example_odom(self)
 
         Back = min_ignore_None(laser_rangesG) # get the smallest value from reading around 180 degrees
-       
         if self.type is 'safe':
             #drive forward until lidar is correct value
             #forward driving for safe cracker
@@ -356,7 +355,7 @@ class NavigateSquare(Node):
             else:
                 self.x_vel = 0 
             #do a third range to slow down
-        elif self.type is 'cage':
+        elif self.type == 'cage':
             #collecting coin from cage, !!!may need adjustment
             #for now drive forward for passive collection system
             if Front > 0.20:
@@ -368,15 +367,20 @@ class NavigateSquare(Node):
                 self.x_vel = -0.1
             else:
                 self.x_vel = 0
-        elif self.type == "rfid":
-            if Front > 0.20:
-                self.x_vel = 0.1
-            elif Front <= 0.20:
+        elif self.type is "rfid":
+            if Front > 0.40:
+                 self.x_vel = 0.1
+                 msg.linear.x = self.x_vel
+            elif Front <= 0.40:
                 self.x_vel = 0
-                self.turn_around()
+                msg.linear.x = self.x_vel
+                self.hard_left_turn()
+                self.hard_left_turn()
                 self.x_vel = 0.1
+                msg.linear.x = self.x_vel
             elif Back < 0.40 and Back > 0.20:
                 self.x_vel = 0
+                msg.linear.x =self.x_vel
         elif self.type is 'laser beam':
             # drive forward then drive back
             if Front < 0.3:
