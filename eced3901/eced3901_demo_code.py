@@ -75,7 +75,7 @@ class Demo(Node):
         self.y_init = 0.0
         self.d_now = 0.0
         self.d_aim = 1.0
-        self.type = 0
+        self.type = 'rfid'
 
         self.laser_range = None
 
@@ -128,6 +128,16 @@ class Demo(Node):
 
         self.pub_vel.publish(msg)
         self.get_logger().info("Sent: " + str(msg))
+    def hard_left_turn(self):
+        msg = Twist()
+        msg.angular.z = 1.0 # sets angular velocity to 1 for a 90 degree turn
+        msg.linear.x = self.x_vel # keeps linear velocity and creates a larger turn radius
+        self.pub_vel.publish(msg) # Publishes data to motors so pascal doesnt stop moving
+        start_time = time.time() #initializes a time variable
+        while time.time() - start_time < 0.13:  # Keep turning for 0.13 seconds using the time variable
+            self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
+            time.sleep(0.1) # sleeps for 0.1s to avoid conflicting commands
+
     def turn_around(self):
         msg = Twist()
         msg.angular.z = 1.0 # sets angular velocity to 1 for a 180 degree turn
@@ -201,7 +211,8 @@ class Demo(Node):
                 self.x_vel = 0.1
             elif Front <= 0.20:
                 self.x_vel = 0
-                self.turn_around()
+                self.hard_left_turn()
+                self.hard_left_turn()
                 self.x_vel = 0.1
             elif Back < 0.40 and Back > 0.20:
                 self.x_vel = 0
