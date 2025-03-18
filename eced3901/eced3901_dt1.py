@@ -340,6 +340,7 @@ class NavigateSquare(Node):
         #self.control_example_odom(self)
 
         Back = min_ignore_None(laser_rangesG) # get the smallest value from reading around 180 degrees
+       
         if self.type is 'safe':
             #drive forward until lidar is correct value
             #forward driving for safe cracker
@@ -355,7 +356,7 @@ class NavigateSquare(Node):
             else:
                 self.x_vel = 0 
             #do a third range to slow down
-        elif self.type == 'cage':
+        elif self.type is 'cage':
             #collecting coin from cage, !!!may need adjustment
             #for now drive forward for passive collection system
             if Front > 0.20:
