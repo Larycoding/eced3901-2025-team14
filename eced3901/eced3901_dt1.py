@@ -277,6 +277,11 @@ class NavigateSquare(Node):
         msg.angular.z = 0.0
         msg.linear.x = 0.0
         self.pub_vel.publish(msg)
+    def drive_back(self):
+        msg = Twist()
+        msg.angular.z = 0.0
+        msg.linear.x = self.x_vel*(-1)
+        self.pub_vel.publish(msg)
 
     def control_example_lidar(self):
         """ Control example using LIDAR"""
@@ -353,30 +358,30 @@ class NavigateSquare(Node):
             #drive forward until lidar is correct value
             #forward driving for safe cracker
             if Front > 0.16:
-                self.x_vel = 0.1
+                self.drive_straight()
             else:
-                self.x_vel = 0
+                self.stop_moving()
         elif self.type is 'coins':
             #drive forward until wall
             #portion for collecting coins demo
             if Front > 0.22:
-                msg.linear.x = self.x_vel
+                self.drive_straight()
             else:
-                msg.linear.x = 0.0
+                self.stop_moving()
             #do a third range to slow down
         elif self.type is 'cage':
             #collecting coin from cage, !!!may need adjustment
             #for now drive forward for passive collection system
-            if Front > 0.40:
-                msg.linear.x = self.x_vel* 0.5
+            if Front > 0.25:
+                self.drive_straight()
             else:
-                msg.linear.x = 0.0
+                self.stop_moving()
         elif self.type is 'reed':
-            if Front > 0.40:
-                msg.linear.x =self.x_vel*(-1.0)
+            if Back > 0.23:
+                self.drive_back()
             else:
                 self.hard_left_turn()
-                msg.linear.x = 0.0
+                self.stop_moving()
         elif self.type is "rfid":
             if Front > 0.22:
                  self.drive_straight()
@@ -390,9 +395,9 @@ class NavigateSquare(Node):
         elif self.type is 'laser beam':
             # drive forward then drive back
             if Front < 0.3:
-                msg.linear.x =self.x_vel
+                self.drive_straight()
             else:
-                msg.linear.x = 0.0  
+                self.stop_moving()
 
         """
 
