@@ -351,45 +351,38 @@ class NavigateSquare(Node):
             #drive forward until wall
             #portion for collecting coins demo
             if Front > 0.22:
-                self.x_vel = 0.3
+                msg.linear.x = self.x_vel
             else:
-                self.x_vel = 0 
+                msg.linear.x = 0.0
             #do a third range to slow down
-        elif self.type == 'cage':
+        elif self.type is 'cage':
             #collecting coin from cage, !!!may need adjustment
             #for now drive forward for passive collection system
             if Front > 0.20:
-                self.x_vel = 0.1
+                msg.linear.x = self.x_vel* 0.5
             else:
-                self.x_vel = 0
+                msg.linear.x = 0.0
         elif self.type is 'reed':
             if Front > 0.20:
-                self.x_vel = -0.1
+                msg.linear.x =self.x_vel*(-1.0)
             else:
-                self.x_vel = 0
+                msg.linear.x = 0.0
         elif self.type is "rfid":
             if Front > 0.40:
-                 self.x_vel = 0.1
                  msg.linear.x = self.x_vel
             elif Front <= 0.40:
-                self.x_vel = 0
-                msg.linear.x = self.x_vel
+                msg.linear.x = 0.0
                 self.hard_left_turn()
                 self.hard_left_turn()
-                self.x_vel = 0.1
                 msg.linear.x = self.x_vel
             elif Back < 0.40 and Back > 0.20:
-                self.x_vel = 0
-                msg.linear.x =self.x_vel
+                msg.linear.x = 0 
         elif self.type is 'laser beam':
             # drive forward then drive back
             if Front < 0.3:
-                self.x_vel = 0.1
+                msg.linear.x =self.x_vel
             else:
-                self.x_vel = 0
-    
-
-            
+                msg.linear.x = 0.0  
 
         """
 
