@@ -174,17 +174,21 @@ class NavigateSquare(Node):
         self.y_init = 0.0
         self.d_now = 0.0
         self.d_aim = 1.0
-        
+        self.n = 0.0
+
+        self.z_now = 0.0
+        self.omega_now = 0.0
+
         self.yaw_now = 0.0
         self.yaw_target = 0.0
 
-        self.type = "reed"
+        self.type = "laserbeam"
 
         self.laser_range = None
 
         pi = math.pi
 
-
+        """
         waypoints = [
         [0,0,0],
         [0, 1.07, -pi/2],
@@ -204,7 +208,7 @@ class NavigateSquare(Node):
         [.4, 1.47, pi/2],
         [.4, 0, pi]
         ]
-
+        """
 
 
         # Subscribe to odometry
@@ -254,6 +258,7 @@ class NavigateSquare(Node):
 		# Calculate distance travelled from initial
         self.d_now = pow( pow(self.x_now - self.x_init + 0.3, 2) + pow(self.y_now - self.y_init, 2), 0.5 )
 
+        """
         if self.d_now < self.d_aim:
             msg.linear.x = self.x_vel
             msg.angular.z = 0.0     
@@ -261,7 +266,10 @@ class NavigateSquare(Node):
         else:
             msg.linear.x = 0.0 # //double(rand())/double(RAND_MAX); //fun
             msg.angular.z = 0.0 # //2*double(rand())/double(RAND_MAX) - 1; //fun
-
+        """
+        if self.n < 13.0:
+            msg.linear.x = self.x_vel
+            self.n = self.n+1
         self.pub_vel.publish(msg)
         self.get_logger().info("Sent: " + str(msg))  
 
@@ -272,8 +280,13 @@ class NavigateSquare(Node):
             msg.angular.z = 1.0 # sets angular velocity to 1 for a 90 degree turn
         else:
             msg.angular.z =0.0 #stop 
-        msg.linear.x = 0 # keeps linear velocity and creates a larger turn radius
+        msg.linear.x = 0.0 # keeps linear velocity and creates a larger turn radius
         self.pub_vel.publish(msg) # Publishes data to motors so pascal doesnt stop moving
+        start_time = time.time() #initializes a time variable
+        while time.time() - start_time < 0.1:  # Keep turning for 0.1 seconds
+            self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
+            time.sleep(0.1)   # sleeps for 0.1s to avoid conflicting commands
+
         
     def micro_left(self):
         msg = Twist()
@@ -297,23 +310,28 @@ class NavigateSquare(Node):
 
     def turn_around(self):
         msg = Twist()
-        msg.angular.z = 1.0 # sets angular velocity to 1 for a 180 degree turn
+        self.yaw_target = math.pi
+        if self.yaw_now < self.yaw_target:
+            msg.angular.z = 1.0 # sets angular velocity to 1 for a 90 degree turn
+        else:
+            msg.angular.z =0.0 #stop 
+        msg.linear.x = 0.0 # keeps linear velocity and creates a larger turn radius
         self.pub_vel.publish(msg) # Publishes data to motors so pascal doesnt stop moving
-        start_time = time.time()  #initializes a time variable
-        while time.time() - start_time < 0.25:  # Keep turning for 0.25 seconds
+        start_time = time.time() #initializes a time variable
+        while time.time() - start_time < 0.1:  # Keep turning for 0.1 seconds
             self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
-            time.sleep(0.1)    # sleeps for 0.1s to avoid conflicting commands
-
+            time.sleep(0.1)   # sleeps for 0.1s to avoid conflicting commands
+            
     def drive_straight(self):
         msg = Twist()
         msg.angular.z = 0.0 #no angular velocity
         msg.linear.x = self.x_vel #drive forward
         start_time = time.time() #initializes a time variable
         self.get_logger().info(str(msg.linear.x))
-        while time.time() - start_time < 0.05:  # Keep turning for 0.1 seconds
+        while time.time() - start_time < 0.1:  # Keep turning for 0.1 seconds
             self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
             time.sleep(0.1)   # sleeps for 0.1s to avoid conflicting commands
-        
+    
         
     #function to stop moving
     def stop_moving(self):
@@ -326,7 +344,7 @@ class NavigateSquare(Node):
     def drive_back(self):
         msg = Twist()
         msg.angular.z = 0.0
-        msg.linear.x = self.x_vel*(-1)
+        msg.linear.x = self.x_vel*(-1.0)
         self.pub_vel.publish(msg)
         
 
@@ -406,7 +424,7 @@ class NavigateSquare(Node):
             #forward driving for safe cracker
             
 
-            if Front > 0.16:
+            if Front > 0.22:
                 self.drive_straight()
             else:
                 self.stop_moving()
@@ -424,29 +442,28 @@ class NavigateSquare(Node):
         elif self.type == "cage":
             #collecting coin from cage, !!!may need adjustment
             #for now drive forward for passive collection system
-            if Front > 0.25:
+            if Front > 0.22:
                 self.drive_straight()
             else:
                 self.stop_moving()
         elif self.type == "reed":
-            if Back > 0.23:
-                self.drive_back()
+            if Front > 0.23:
+                self.drive_straight()
             else:
-                self.hard_left_turn()
+                self.turn_around()
                 self.stop_moving()
         elif self.type == "rfid":
-            if Front > 0.42:
+            if Front > 0.22:
                  self.drive_straight()
-            elif Front <= 0.42:
+            elif Front <= 0.22:
                 self.stop_moving()
-                self.hard_left_turn()
-                self.hard_left_turn()
+                self.turn_around()
                 self.drive_straight()
             elif Back < 0.40 and Back > 0.20:
                 self.stop_moving()
-        elif self.type == "laser beam":
+        elif self.type == "laserbeam":
             # drive forward then drive back
-            if Front > 0.3:
+            if Front > 0.4:
                 self.drive_straight()
             else:
                 self.stop_moving()
@@ -564,9 +581,10 @@ class NavigateSquare(Node):
 
         #self.get_logger().info(f'Timer hit')
 
-        #self.control_example_odom()
+        self.control_example_odom()
         
-        self.control_example_lidar()  #switched to lidar from lab instruction, keep odom commented out unless using
+        #self.control_example_lidar()  #switched to lidar from lab instruction, keep odom commented out unless using
+        
         self.get_logger().info("===========: " + str(self.y_now))  
         """
         if self.y_now < -0.2:
