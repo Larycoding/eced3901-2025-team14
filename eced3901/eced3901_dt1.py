@@ -39,6 +39,7 @@ class LaserDataInterface(object):
         if self.logger:
             return self.logger
 
+
     def get_range_array(self, center_deg, left_offset_deg=-5, right_offset_deg=+5, invalid_data=None):
         """
         This function should return an array of lidar data. Set center_deg (0 = front), the array starts at left_offset_deg
@@ -85,7 +86,7 @@ class LaserDataInterface(object):
 
         tempdata = self.laser_data[0]
         data = list(map(lambda x: None if x < self.minrange or x > self.maxrange else x, tempdata))
-        
+        return data
         #self.get_logger().info('Scan Data: "%s"' % str(data))
                 
         # Index 0 maps to 0, Index len/2 maps to 180, Index len maps to -180
@@ -148,6 +149,9 @@ def min_ignore_None(data):
         return math.inf
     return min(data, key=noneIsInfinite)
 
+
+
+
 class NavigateSquare(Node):
     """Simple class designed to navigate a square"""
 	
@@ -165,18 +169,35 @@ class NavigateSquare(Node):
         # integers (python is loosely typed)
 
         # WARNING: Check for updates, note this is set and will run backwards
-        #          on the physical model but correctly in simulation.
-        self.x_vel = -0.2 # velocity changed to correct value for robot not simulation
-
-        self.x_now = 0.0
-        self.x_init = 0.0
-        self.y_now = 0.0
-        self.y_init = 0.0
-        self.d_now = 0.0
-        self.d_aim = 1.0
-        self.type = "rfid"
+        #          on the phys[
+        self.yaw_now = 0.0
 
         self.laser_range = None
+
+        pie = math.pi
+
+
+        waypoints = [
+        [0,0,0],
+        [0, 1.07, -pie/2],
+        [0.45, 1.07, -pie/2],
+        [0.4, 1.07, 0],
+        [.4, 1.47, pie/2],
+        [.90, 1.47, 0],
+        [.90, 1.74, pie/2],
+        [1.30, 1.74, pie]
+        [1.30, 1.47, pie/2],
+        [.9, 1.47, 0],
+        [.9, 0, pie],
+        [.9, .42, pie/2],
+        [1.47, .42, -pie/2],
+        [.9, .42, 0],
+        [.9, 1.47, -pie/2],
+        [.4, 1.47, pie/2],
+        [.4, 0, pie]
+        ]
+
+
 
         # Subscribe to odometry
         self.sub_odom = self.create_subscription(
@@ -207,6 +228,13 @@ class NavigateSquare(Node):
 
         self.timer = self.create_timer(0.1, self.timer_callback)
 
+    def yaw(self):
+        topyaw = 2*(self.omega_now*self.z_now)
+        bottomyaw = 1 - 2*(self.z_now*self.z_now)
+        yaw = np.arctan2(topyaw, bottomyaw)
+        return yaw
+
+
     def control_example_odom(self):
         """ Control example using odomentry """
 
@@ -214,7 +242,7 @@ class NavigateSquare(Node):
         # This has two fields:
         msg.linear.x
         msg.angular.z
-		        	
+        self.yaw_now = yaw()	
 		# Calculate distance travelled from initial
         self.d_now = pow( pow(self.x_now - self.x_init + 0.3, 2) + pow(self.y_now - self.y_init, 2), 0.5 )
 
@@ -267,21 +295,32 @@ class NavigateSquare(Node):
         while time.time() - start_time < 0.25:  # Keep turning for 0.25 seconds
             self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
             time.sleep(0.1)    # sleeps for 0.1s to avoid conflicting commands
+
     def drive_straight(self):
         msg = Twist()
         msg.angular.z = 0.0
         msg.linear.x = self.x_vel
-        self.pub_vel.publish(msg)
+        start_time = time.time() #initializes a time variable
+        self.get_logger().info(str(msg.linear.x))
+        while time.time() - start_time < 0.05:  # Keep turning for 0.1 seconds
+            self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
+            time.sleep(0.1)   # sleeps for 0.1s to avoid conflicting commands
+        
+        
+    
     def stop_moving(self):
         msg = Twist()
         msg.angular.z = 0.0
         msg.linear.x = 0.0
         self.pub_vel.publish(msg)
+        time.sleep(0.1)
+    
     def drive_back(self):
         msg = Twist()
         msg.angular.z = 0.0
         msg.linear.x = self.x_vel*(-1)
         self.pub_vel.publish(msg)
+        
 
     def control_example_lidar(self):
         """ Control example using LIDAR"""
@@ -354,52 +393,61 @@ class NavigateSquare(Node):
         #self.control_example_odom(self)
 
         Back = min_ignore_None(laser_rangesG) # get the smallest value from reading around 180 degrees
-        if self.type is 'safe':
+        if self.type =="safe":
             #drive forward until lidar is correct value
             #forward driving for safe cracker
+            
+
             if Front > 0.16:
                 self.drive_straight()
             else:
                 self.stop_moving()
-        elif self.type is 'coins':
+
+        elif self.type == "coins":
             #drive forward until wall
             #portion for collecting coins demo
+            
+
             if Front > 0.22:
                 self.drive_straight()
             else:
                 self.stop_moving()
             #do a third range to slow down
-        elif self.type is 'cage':
+        elif self.type == "cage":
             #collecting coin from cage, !!!may need adjustment
             #for now drive forward for passive collection system
             if Front > 0.25:
                 self.drive_straight()
             else:
                 self.stop_moving()
-        elif self.type is 'reed':
+        elif self.type == "reed":
             if Back > 0.23:
                 self.drive_back()
             else:
                 self.hard_left_turn()
                 self.stop_moving()
-        elif self.type is "rfid":
-            if Front > 0.22:
+        elif self.type == "rfid":
+            if Front > 0.42:
                  self.drive_straight()
-            elif Front <= 0.22:
+            elif Front <= 0.42:
                 self.stop_moving()
                 self.hard_left_turn()
                 self.hard_left_turn()
                 self.drive_straight()
             elif Back < 0.40 and Back > 0.20:
                 self.stop_moving()
-        elif self.type is 'laser beam':
+        elif self.type == "laser beam":
             # drive forward then drive back
-            if Front < 0.3:
+            if Front > 0.3:
                 self.drive_straight()
             else:
                 self.stop_moving()
 
-        """
+        elif self.type == "run1":
+
+                
+     
+    """
 
 
         if laser_rangesA and laser_rangesB and laser_rangesC and laser_rangesD is None: # catch statement to aid in filtering out None values 
@@ -496,11 +544,12 @@ class NavigateSquare(Node):
 
             else:
                 print ("error 1")
-        """
+    """
+
+    self.pub_vel.publish(msg)
+    self.get_logger().info("Sent: " + str(msg))      
 
 
-        self.pub_vel.publish(msg)
-        self.get_logger().info("Sent: " + str(msg))      
 
     def timer_callback(self):
         """Timer callback for 10Hz control loop"""
@@ -524,6 +573,8 @@ class NavigateSquare(Node):
         #self.get_logger().info('Msg Data: "%s"' % msg)        
         self.x_now = msg.pose.pose.position.x
         self.y_now = msg.pose.pose.position.y
+        self.z_now = msg.pose.pose.orientation.z
+        self.omega_now = msg.pose.pose.orientation.w
 
     def range_callback(self, msg):
         """Callback on 'range' subscription"""
