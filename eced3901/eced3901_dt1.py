@@ -267,7 +267,7 @@ class NavigateSquare(Node):
             msg.linear.x = 0.0 # //double(rand())/double(RAND_MAX); //fun
             msg.angular.z = 0.0 # //2*double(rand())/double(RAND_MAX) - 1; //fun
         """
-        if self.n < 13.0:
+        if self.n < 35.0:
             msg.linear.x = self.x_vel
             self.n = self.n+1
         self.pub_vel.publish(msg)
