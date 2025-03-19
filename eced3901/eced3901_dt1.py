@@ -161,41 +161,48 @@ class NavigateSquare(Node):
         #This calls the initilization function of the base Node class
         super().__init__('navigate_square')
 
-        # We can either create variables here by declaring them
-        # as part of the 'self' class, or we could declare them
-        # earlier as part of the class itself. I find it easier
-        # to declare them here
-
         # Ensure these are obviously floating point numbers and not
         # integers (python is loosely typed)
 
         # WARNING: Check for updates, note this is set and will run backwards
         #          on the phys[
+        self.x_vel = -0.2 # velocity changed to correct value for robot not simulation
+
+        self.x_now = 0.0
+        self.x_init = 0.0
+        self.y_now = 0.0
+        self.y_init = 0.0
+        self.d_now = 0.0
+        self.d_aim = 1.0
+        
         self.yaw_now = 0.0
+        self.yaw_target = 0.0
+
+        self.type = "reed"
 
         self.laser_range = None
 
-        pie = math.pi
+        pi = math.pi
 
 
         waypoints = [
         [0,0,0],
-        [0, 1.07, -pie/2],
-        [0.45, 1.07, -pie/2],
+        [0, 1.07, -pi/2],
+        [0.45, 1.07, -pi/2],
         [0.4, 1.07, 0],
-        [.4, 1.47, pie/2],
+        [.4, 1.47, pi/2],
         [.90, 1.47, 0],
-        [.90, 1.74, pie/2],
-        [1.30, 1.74, pie]
-        [1.30, 1.47, pie/2],
+        [.90, 1.74, pi/2],
+        [1.30, 1.74, pi]
+        [1.30, 1.47, pi/2],
         [.9, 1.47, 0],
-        [.9, 0, pie],
-        [.9, .42, pie/2],
-        [1.47, .42, -pie/2],
+        [.9, 0, pi],
+        [.9, .42, pi/2],
+        [1.47, .42, -pi/2],
         [.9, .42, 0],
-        [.9, 1.47, -pie/2],
-        [.4, 1.47, pie/2],
-        [.4, 0, pie]
+        [.9, 1.47, -pi/2],
+        [.4, 1.47, pi/2],
+        [.4, 0, pi]
         ]
 
 
@@ -260,14 +267,14 @@ class NavigateSquare(Node):
 
     def hard_left_turn(self):
         msg = Twist()
-        msg.angular.z = 1.0 # sets angular velocity to 1 for a 90 degree turn
-        msg.linear.x = self.x_vel # keeps linear velocity and creates a larger turn radius
+        self.yaw_target = math.pi/2
+        if self.yaw_now < self.yaw_target:
+            msg.angular.z = 1.0 # sets angular velocity to 1 for a 90 degree turn
+        else:
+            msg.angular.z =0.0 #stop 
+        msg.linear.x = 0 # keeps linear velocity and creates a larger turn radius
         self.pub_vel.publish(msg) # Publishes data to motors so pascal doesnt stop moving
-        start_time = time.time() #initializes a time variable
-        while time.time() - start_time < 0.13:  # Keep turning for 0.13 seconds using the time variable
-            self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
-            time.sleep(0.1) # sleeps for 0.1s to avoid conflicting commands
-
+        
     def micro_left(self):
         msg = Twist()
         msg.angular.z = 0.2 # sets angular velocity to 1 for a slight left turn
@@ -299,8 +306,8 @@ class NavigateSquare(Node):
 
     def drive_straight(self):
         msg = Twist()
-        msg.angular.z = 0.0
-        msg.linear.x = self.x_vel
+        msg.angular.z = 0.0 #no angular velocity
+        msg.linear.x = self.x_vel #drive forward
         start_time = time.time() #initializes a time variable
         self.get_logger().info(str(msg.linear.x))
         while time.time() - start_time < 0.05:  # Keep turning for 0.1 seconds
@@ -308,14 +315,14 @@ class NavigateSquare(Node):
             time.sleep(0.1)   # sleeps for 0.1s to avoid conflicting commands
         
         
-    
+    #function to stop moving
     def stop_moving(self):
         msg = Twist()
-        msg.angular.z = 0.0
-        msg.linear.x = 0.0
+        msg.angular.z = 0.0 #no angular velocity
+        msg.linear.x = 0.0 #no movement
         self.pub_vel.publish(msg)
         time.sleep(0.1)
-    
+    #function to drive backwards
     def drive_back(self):
         msg = Twist()
         msg.angular.z = 0.0
@@ -576,6 +583,7 @@ class NavigateSquare(Node):
         self.y_now = msg.pose.pose.position.y
         self.z_now = msg.pose.pose.orientation.z
         self.omega_now = msg.pose.pose.orientation.w
+        self.yaw_now = self.yaw()	
 
     def range_callback(self, msg):
         """Callback on 'range' subscription"""
