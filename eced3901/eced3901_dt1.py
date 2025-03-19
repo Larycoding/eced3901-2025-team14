@@ -267,7 +267,16 @@ class NavigateSquare(Node):
         while time.time() - start_time < 0.25:  # Keep turning for 0.25 seconds
             self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
             time.sleep(0.1)    # sleeps for 0.1s to avoid conflicting commands
-
+    def drive_straight(self):
+        msg = Twist()
+        msg.angular.z = 0.0
+        msg.linear.x = self.x_vel
+        self.pub_vel.publish(msg)
+    def stop_moving(self):
+        msg = Twist()
+        msg.angular.z = 0.0
+        msg.linear.x = 0.0
+        self.pub_vel.publish(msg)
 
     def control_example_lidar(self):
         """ Control example using LIDAR"""
@@ -370,14 +379,14 @@ class NavigateSquare(Node):
                 msg.linear.x = 0.0
         elif self.type is "rfid":
             if Front > 0.22:
-                 msg.linear.x = self.x_vel
+                 self.drive_straight()
             elif Front <= 0.22:
-                msg.linear.x = 0.0
+                self.stop_moving()
                 self.hard_left_turn()
                 self.hard_left_turn()
-                msg.linear.x = self.x_vel
+                self.drive_straight()
             elif Back < 0.40 and Back > 0.20:
-                msg.linear.x = 0 
+                self.stop_moving()
         elif self.type is 'laser beam':
             # drive forward then drive back
             if Front < 0.3:
