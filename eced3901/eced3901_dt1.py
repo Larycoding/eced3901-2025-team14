@@ -464,6 +464,9 @@ class NavigateSquare(Node):
         #self.control_example_odom(self)
 
         Back = min_ignore_None(laser_rangesG) # get the smallest value from reading around 180 degrees
+        
+        if Front < 0.22:
+            msg.linear.x = self.x_vel
         """
         if self.type =="safe":
             #drive forward until lidar is correct value
