@@ -368,9 +368,9 @@ class NavigateSquare(Node):
             else:
                 msg.linear.x = 0.0
         elif self.type is "rfid":
-            if Front > 0.40:
+            if Front > 0.22:
                  msg.linear.x = self.x_vel
-            elif Front <= 0.40:
+            elif Front <= 0.22:
                 msg.linear.x = 0.0
                 self.hard_left_turn()
                 self.hard_left_turn()
