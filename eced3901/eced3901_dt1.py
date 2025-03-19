@@ -267,6 +267,12 @@ class NavigateSquare(Node):
             msg.linear.x = 0.0 # //double(rand())/double(RAND_MAX); //fun
             msg.angular.z = 0.0 # //2*double(rand())/double(RAND_MAX) - 1; //fun
         """
+        if self.n < 40.0:
+            msg.linear.x = self.x_vel
+        else:
+            msg.linear.x = 0.0
+
+        '''
         start_time = time.time()
         if self.n < 4.0:
             msg.angular.z = (-1.0)
@@ -292,8 +298,8 @@ class NavigateSquare(Node):
             while time.time() - start_time < 1.0:  # Keep turning for 0.1 seconds
                 self.pub_vel.publish(msg)
             self.n = self.n+1.0
-
-            """
+             '''
+        """
         elif self.n >10.0 and self.n < 20.0:
             msg.linear.z = self.x_vel
             msg.angular.x = 0.0
@@ -458,6 +464,7 @@ class NavigateSquare(Node):
         #self.control_example_odom(self)
 
         Back = min_ignore_None(laser_rangesG) # get the smallest value from reading around 180 degrees
+        """
         if self.type =="safe":
             #drive forward until lidar is correct value
             #forward driving for safe cracker
@@ -509,9 +516,9 @@ class NavigateSquare(Node):
 
         elif self.type == "run1":
 
-                
-     
             """
+     
+        """
 
 
         if laser_rangesA and laser_rangesB and laser_rangesC and laser_rangesD is None: # catch statement to aid in filtering out None values 
