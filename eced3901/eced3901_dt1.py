@@ -358,14 +358,15 @@ class NavigateSquare(Node):
         elif self.type is 'cage':
             #collecting coin from cage, !!!may need adjustment
             #for now drive forward for passive collection system
-            if Front > 0.20:
+            if Front > 0.40:
                 msg.linear.x = self.x_vel* 0.5
             else:
                 msg.linear.x = 0.0
         elif self.type is 'reed':
-            if Front > 0.20:
+            if Front > 0.40:
                 msg.linear.x =self.x_vel*(-1.0)
             else:
+                self.hard_left_turn()
                 msg.linear.x = 0.0
         elif self.type is "rfid":
             if Front > 0.22:
