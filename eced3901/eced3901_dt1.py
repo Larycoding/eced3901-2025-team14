@@ -27,6 +27,7 @@ from sensor_msgs.msg import LaserScan
 from collections import deque
 import math
 import time
+import numpy as np
 
 class LaserDataInterface(object):
 
@@ -242,7 +243,7 @@ class NavigateSquare(Node):
         # This has two fields:
         msg.linear.x
         msg.angular.z
-        self.yaw_now = yaw()	
+        self.yaw_now = self.yaw()	
 		# Calculate distance travelled from initial
         self.d_now = pow( pow(self.x_now - self.x_init + 0.3, 2) + pow(self.y_now - self.y_init, 2), 0.5 )
 
