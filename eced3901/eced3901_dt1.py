@@ -447,7 +447,7 @@ class NavigateSquare(Node):
 
                 
      
-    """
+            """
 
 
         if laser_rangesA and laser_rangesB and laser_rangesC and laser_rangesD is None: # catch statement to aid in filtering out None values 
@@ -544,10 +544,10 @@ class NavigateSquare(Node):
 
             else:
                 print ("error 1")
-    """
+            """
 
-    self.pub_vel.publish(msg)
-    self.get_logger().info("Sent: " + str(msg))      
+        self.pub_vel.publish(msg)
+        self.get_logger().info("Sent: " + str(msg))      
 
 
 
