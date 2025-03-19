@@ -267,9 +267,48 @@ class NavigateSquare(Node):
             msg.linear.x = 0.0 # //double(rand())/double(RAND_MAX); //fun
             msg.angular.z = 0.0 # //2*double(rand())/double(RAND_MAX) - 1; //fun
         """
-        if self.n < 35.0:
-            msg.linear.x = self.x_vel
+        start_time = time.time()
+        if self.n < 4.0:
+            msg.angular.z = (-1.0)
+            msg.linear.x =0.0
+            while time.time() - start_time < 1.0:  # Keep turning for 0.1 seconds
+                self.pub_vel.publish(msg)
+                time.sleep(0.1)
+            self.n = self.n+1.0
+            msg.angular.z = 0.0
+            msg.linear.x = (-1.0)
+            while time.time() - start_time < 2.0:  # Keep turning for 0.1 seconds
+                self.pub_vel.publish(msg)
+                time.sleep(0.1)
+            self.n = self.n + 1
+            msg.angular.z = 1.0
+            msg.linear.x = 0.0
+            while time.time() - start_time < 1.0:  # Keep turning for 0.1 seconds
+                self.pub_vel.publish(msg)
+                time.sleep(0.1)
+            self.n = self.n + 1
+            msg.angular.z = 0.0
+            msg.linear.x =0.0
+            while time.time() - start_time < 1.0:  # Keep turning for 0.1 seconds
+                self.pub_vel.publish(msg)
+            self.n = self.n+1.0
+
+            """
+        elif self.n >10.0 and self.n < 20.0:
+            msg.linear.z = self.x_vel
+            msg.angular.x = 0.0
             self.n = self.n+1
+            self.pub_vel.publish(msg)
+        elif self.n <20.0 and self.n >30.0:
+            msg.angular.z = 1.0
+            msg.linear.x =0.0
+            self.n =self.n+1
+            self.pub_vel.publish(msg)
+        elif self.n > 30.0:
+            msg.angular.z =0.0
+            msg.linear.x = 0.0
+            self.pub_vel.publish(msg)
+            """
         self.pub_vel.publish(msg)
         self.get_logger().info("Sent: " + str(msg))  
 
