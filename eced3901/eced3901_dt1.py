@@ -267,9 +267,15 @@ class NavigateSquare(Node):
             msg.linear.x = 0.0 # //double(rand())/double(RAND_MAX); //fun
             msg.angular.z = 0.0 # //2*double(rand())/double(RAND_MAX) - 1; //fun
         """
+<<<<<<< HEAD
         start_time = time.time()
         if self.n < 10.0:
             msg.angular.z = (-1.0)
+=======
+        time.sleep(60)
+        if self.n < 3.0:
+            msg.angular.z = 1.0
+>>>>>>> d705fd8f5b70f3abab4ba92f2e457e37d410bb1d
             self.n =self.n+1
             while time.time() - start_time < 0.1:  # Keep turning for 0.1 seconds
                 self.pub_vel.publish(msg)
