@@ -267,10 +267,15 @@ class NavigateSquare(Node):
             msg.linear.x = 0.0 # //double(rand())/double(RAND_MAX); //fun
             msg.angular.z = 0.0 # //2*double(rand())/double(RAND_MAX) - 1; //fun
         """
-        if self.n < 40.0:
-            msg.linear.x = self.x_vel
-        else:
-            msg.linear.x = 0.0
+        if self.n < 3.0:
+            msg.angular.z = 1.0
+            self.n =self.n+1
+            self.pub_vel.publish(msg)
+        # drive forward code
+        #if self.n < 40.0:
+            #msg.linear.x = self.x_vel
+        #else:
+           # msg.linear.x = 0.0
 
         '''
         start_time = time.time()
@@ -465,22 +470,7 @@ class NavigateSquare(Node):
 
         Back = min_ignore_None(laser_rangesG) # get the smallest value from reading around 180 degrees
         
-        if Front < 0.22 and left > 0.22:
-            msg.angular.z = 1.0
-            msg.linear.x = 0.0
-            self.pub_vel.publish(msg)
-            if left < 0.22:
-                msg.angular.z = 0.0
-                msg.linear.x = 0.0
-                self.pub_vel.publish(msg)
-        elif Front > 0.22 and left < 0.22:
-            msg.linear.x = self.x_vel*0.5
-            msg.angular.z = 0.0
-            self.pub_vel.publish(msg)
-        elif Front < 0.22 and left < 0.22:
-            msg.linear.x = 0.0
-            msg.angular.z = 1.0
-
+       
         """
         if self.type =="safe":
             #drive forward until lidar is correct value
