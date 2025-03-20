@@ -267,7 +267,7 @@ class NavigateSquare(Node):
             msg.linear.x = 0.0 # //double(rand())/double(RAND_MAX); //fun
             msg.angular.z = 0.0 # //2*double(rand())/double(RAND_MAX) - 1; //fun
         """
-        time.sleep(25)
+        time.sleep(60)
         if self.n < 3.0:
             msg.angular.z = 1.0
             self.n =self.n+1
