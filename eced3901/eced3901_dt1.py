@@ -35,6 +35,7 @@ class LaserDataInterface(object):
         self.laser_data = deque()
         self.depth = storage_depth
         self.logger = logger
+        self.i = 0
 
     def get_logger(self):
         if self.logger:
@@ -175,6 +176,8 @@ class NavigateSquare(Node):
         self.d_now = 0.0
         self.d_aim = 1.0
         self.n = 0.0
+        self.i = 0.0
+        self.t = 0
 
         self.z_now = 0.0
         self.omega_now = 0.0
@@ -182,7 +185,7 @@ class NavigateSquare(Node):
         self.yaw_now = 0.0
         self.yaw_target = 0.0
 
-        self.type = "laserbeam"
+        self.type = "mag"
 
         self.laser_range = None
 
@@ -267,16 +270,21 @@ class NavigateSquare(Node):
             msg.linear.x = 0.0 # //double(rand())/double(RAND_MAX); //fun
             msg.angular.z = 0.0 # //2*double(rand())/double(RAND_MAX) - 1; //fun
         """
+        """
         time.sleep(60)
         if self.n < 3.0:
             msg.angular.z = 1.0
             self.n =self.n+1
+            self.pub_vel.publish(msg)
+        else:
+            msg.angular.z = 0.0
             self.pub_vel.publish(msg)
         # drive forward code
         #if self.n < 40.0:
             #msg.linear.x = self.x_vel
         #else:
            # msg.linear.x = 0.0
+           
 
         '''
         start_time = time.time()
@@ -306,6 +314,7 @@ class NavigateSquare(Node):
             self.n = self.n+1.0
              '''
         """
+        """
         elif self.n >10.0 and self.n < 20.0:
             msg.linear.z = self.x_vel
             msg.angular.x = 0.0
@@ -326,18 +335,29 @@ class NavigateSquare(Node):
 
     def hard_left_turn(self):
         msg = Twist()
-        self.yaw_target = math.pi/2
-        if self.yaw_now < self.yaw_target:
-            msg.angular.z = 1.0 # sets angular velocity to 1 for a 90 degree turn
-        else:
-            msg.angular.z =0.0 #stop 
+        
+        msg.angular.z = 1.63#stop 
         msg.linear.x = 0.0 # keeps linear velocity and creates a larger turn radius
+        
         self.pub_vel.publish(msg) # Publishes data to motors so pascal doesnt stop moving
         start_time = time.time() #initializes a time variable
-        while time.time() - start_time < 0.1:  # Keep turning for 0.1 seconds
+        while time.time() - start_time < 1.0:  # Keep turning for 0.1 seconds
             self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
             time.sleep(0.1)   # sleeps for 0.1s to avoid conflicting commands
 
+
+
+    def hard_right_turn(self):
+        msg = Twist()
+        
+        msg.angular.z = -1.63#stop 
+        msg.linear.x = 0.0 # keeps linear velocity and creates a larger turn radius
+        
+        self.pub_vel.publish(msg) # Publishes data to motors so pascal doesnt stop moving
+        start_time = time.time() #initializes a time variable
+        while time.time() - start_time < 1.0:  # Keep turning for 0.1 seconds
+            self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
+            time.sleep(0.1)   # sleeps for 0.1s to avoid conflicting commands
         
     def micro_left(self):
         msg = Twist()
@@ -379,7 +399,7 @@ class NavigateSquare(Node):
         msg.linear.x = self.x_vel #drive forward
         start_time = time.time() #initializes a time variable
         self.get_logger().info(str(msg.linear.x))
-        while time.time() - start_time < 0.1:  # Keep turning for 0.1 seconds
+        while time.time() - start_time < 0.05:  # Keep turning for 0.1 seconds
             self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
             time.sleep(0.1)   # sleeps for 0.1s to avoid conflicting commands
     
@@ -390,13 +410,17 @@ class NavigateSquare(Node):
         msg.angular.z = 0.0 #no angular velocity
         msg.linear.x = 0.0 #no movement
         self.pub_vel.publish(msg)
-        time.sleep(0.1)
+        time.sleep(0.5)
     #function to drive backwards
     def drive_back(self):
         msg = Twist()
-        msg.angular.z = 0.0
-        msg.linear.x = self.x_vel*(-1.0)
-        self.pub_vel.publish(msg)
+        msg.angular.z = 0.0 #no angular velocity
+        msg.linear.x = self.x_vel * -1#drive forward
+        start_time = time.time() #initializes a time variable
+        self.get_logger().info(str(msg.linear.x))
+        while time.time() - start_time < 0.05:  # Keep turning for 0.1 seconds
+            self.pub_vel.publish(msg) #continues to publish data for the duration of the code to prevent a stop error
+            time.sleep(0.1)
         
 
     def control_example_lidar(self):
@@ -470,8 +494,304 @@ class NavigateSquare(Node):
         #self.control_example_odom(self)
 
         Back = min_ignore_None(laser_rangesG) # get the smallest value from reading around 180 degrees
+
+        self.get_logger().info("check 0")
+        print("check 0")
         
-       
+
+        
+        if self.i == 0:
+            if Front > 0.1:
+                self.i += 1
+
+                
+
+        if self.i != 0:
+            self.get_logger().info("check 1")
+
+            if self.type == "mag":
+
+                while self.t < 15:
+                    self.stop_moving()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                while self.t < 61:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+                    
+                self.hard_right_turn()
+                self.micro_right
+                self.get_logger().info("check 2")
+                self.stop_moving()
+                
+                while self.t < 22:
+                    self.drive_back()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                while self.t < 15:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+
+                self.hard_right_turn()
+
+                while self.t < 61:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                while True:
+                    self.stop_moving()
+                
+
+            elif self.type == 'fuck':
+                self.get_logger().info("check 1")
+
+                while self.t < 15:
+                    self.stop_moving()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                while self.t < 84:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+                    
+                
+                self.hard_left_turn()
+                self.get_logger().info("check 2")
+                self.stop_moving()
+                
+                while self.t < 41:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                self.hard_left_turn()
+                
+                self.stop_moving()
+
+                while self.t < 34:
+                    self.drive_back()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+
+                while self.t < 20:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                self.hard_right_turn()
+
+                self.stop_moving()
+
+                while self.t < 17:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                self.hard_left_turn()
+
+                self.stop_moving()
+
+                while self.t < 30:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                
+
+                self.stop_moving()
+
+                while self.t < 25:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                self.hard_right_turn()
+
+                self.stop_moving()
+
+                while self.t < 20:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                while self.t < 57:
+                    self.drive_back()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                while self.t < 5:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                self.micro_right
+
+                self.hard_right_turn()
+
+                self.stop_moving()
+
+                while self.t < 50:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                self.hard_right_turn()
+
+                self.stop_moving()
+
+                while self.t < 30:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                self.hard_right_turn()
+
+                self.stop_moving()
+
+                while self.t < 86:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+
+                
+
+                while True:
+                    self.stop_moving()
+
+
+            elif self.type == 'fuck2':
+                self.get_logger().info("check 1")
+
+                while self.t < 10:
+                    self.stop_moving()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                while self.t < 84:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+                    
+                
+                self.hard_left_turn()
+                self.get_logger().info("check 2")
+                self.stop_moving()
+                
+                while self.t < 31:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                self.hard_left_turn()
+                
+                self.stop_moving()
+
+                while self.t < 34:
+                    self.drive_back()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+
+                while self.t < 84:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+
+                self.hard_right_turn()
+
+                self.stop_moving()
+
+                while self.t < 40:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                while self.t < 57:
+                    self.drive_back()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                while self.t < 3:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                self.micro_right
+
+                self.hard_right_turn()
+
+                self.stop_moving()
+
+                while self.t < 84:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                self.hard_right_turn()
+
+                self.stop_moving()
+
+                while self.t < 30:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+                self.hard_right_turn()
+
+                self.stop_moving()
+
+                while self.t < 86:
+                    self.drive_straight()
+                    self.t += 1
+                self.stop_moving()
+                self.t = 0
+
+
+                
+
+                while True:
+                    self.stop_moving()
+
+
         """
         if self.type =="safe":
             #drive forward until lidar is correct value
@@ -635,9 +955,9 @@ class NavigateSquare(Node):
 
         #self.get_logger().info(f'Timer hit')
 
-        self.control_example_odom()
+        #self.control_example_odom()
         
-        #self.control_example_lidar()  #switched to lidar from lab instruction, keep odom commented out unless using
+        self.control_example_lidar()  #switched to lidar from lab instruction, keep odom commented out unless using
         
         self.get_logger().info("===========: " + str(self.y_now))  
         """
