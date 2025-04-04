@@ -176,8 +176,8 @@ class NavigateSquare(Node):
         self.d_now = 0.0
         self.d_aim = 1.0
         self.n = 0.0
-        self.i = 0.0
-        self.t = 0
+        self.i = 0.0 #counter variable
+        self.t = 0 #run identifier variable
 
         self.z_now = 0.0
         self.omega_now = 0.0
@@ -185,7 +185,7 @@ class NavigateSquare(Node):
         self.yaw_now = 0.0
         self.yaw_target = 0.0
 
-        self.type = "mag"
+        self.type = "mag" #variable for run type
 
         self.laser_range = None
 
@@ -242,7 +242,7 @@ class NavigateSquare(Node):
         self.ldi = LaserDataInterface(logger=self.get_logger())
 
         self.timer = self.create_timer(0.1, self.timer_callback)
-
+# function for calculating yaw
     def yaw(self):
         topyaw = 2*(self.omega_now*self.z_now)
         bottomyaw = 1 - 2*(self.z_now*self.z_now)
@@ -260,7 +260,7 @@ class NavigateSquare(Node):
         self.yaw_now = self.yaw()	
 		# Calculate distance travelled from initial
         self.d_now = pow( pow(self.x_now - self.x_init + 0.3, 2) + pow(self.y_now - self.y_init, 2), 0.5 )
-
+    #
         """
         if self.d_now < self.d_aim:
             msg.linear.x = self.x_vel
@@ -285,19 +285,19 @@ class NavigateSquare(Node):
         #else:
            # msg.linear.x = 0.0
            
-
+    #A version/test for naviagting, commented out due to it not behaving as planned 
         '''
         start_time = time.time()
-        if self.n < 4.0:
-            msg.angular.z = (-1.0)
+        if self.n < 4.0: #counter
+            msg.angular.z = (-1.0)#rotate
             msg.linear.x =0.0
             while time.time() - start_time < 1.0:  # Keep turning for 0.1 seconds
                 self.pub_vel.publish(msg)
                 time.sleep(0.1)
             self.n = self.n+1.0
             msg.angular.z = 0.0
-            msg.linear.x = (-1.0)
-            while time.time() - start_time < 2.0:  # Keep turning for 0.1 seconds
+            msg.linear.x = (-1.0)#drive 
+            while time.time() - start_time < 2.0:  # Keep driving for 0.1 seconds
                 self.pub_vel.publish(msg)
                 time.sleep(0.1)
             self.n = self.n + 1
@@ -508,288 +508,282 @@ class NavigateSquare(Node):
 
         if self.i != 0:
             self.get_logger().info("check 1")
-
+    #different types of "runs" indicated with the type.
             if self.type == "mag":
-
-                while self.t < 15:
-                    self.stop_moving()
+                #first part, waiting
+                while self.t < 15: 
+                    self.stop_moving() 
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                #next portion is drive forward
                 while self.t < 61:
                     self.drive_straight()
                     self.t += 1
                 self.stop_moving()
                 self.t = 0
-                    
+                    #rotate to the right
                 self.hard_right_turn()
                 self.micro_right
                 self.get_logger().info("check 2")
-                self.stop_moving()
-                
+                self.stop_moving() #stop moving to keep timing more exact
+                #drive backwards section for hitting the reed sensor
                 while self.t < 22:
                     self.drive_back()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                # drive straight
                 while self.t < 15:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
 
-
+                #turn right again to turn toward start
                 self.hard_right_turn()
-
+                #drive straight to drive home
                 while self.t < 61:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+# stop moving/ ends run
                 while True:
                     self.stop_moving()
                 
-
+        #next run for rfid and cage  run
             elif self.type == 'fuck':
                 self.get_logger().info("check 1")
-
+                #starting wait time
                 while self.t < 15:
-                    self.stop_moving()
+                    self.stop_moving() #stop moving to keep timing more exact
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                #drive forward timed until the wall opening
                 while self.t < 84:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
                     
-                
+                # turn to the left to aim through the door
                 self.hard_left_turn()
                 self.get_logger().info("check 2")
-                self.stop_moving()
-                
+                self.stop_moving() #stop moving to keep timing more exact
+                #drive straight through the door
                 while self.t < 41:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                #turn left turned away from rfid sensor
                 self.hard_left_turn()
                 
                 self.stop_moving()
-
+                # backup to hit the RFID and straighten the robot
                 while self.t < 34:
                     self.drive_back()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                # drive forward  
 
                 while self.t < 20:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                # turn right 
                 self.hard_right_turn()
 
-                self.stop_moving()
-
+                self.stop_moving() #stop moving to keep timing more exact
+                #drive forward a smaller amount 
                 while self.t < 17:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                #turn left
                 self.hard_left_turn()
 
                 self.stop_moving()
-
+                #drive a longer time forward
                 while self.t < 30:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
 
-                
-
-                self.stop_moving()
-
+                self.stop_moving() #stop moving to keep timing more exact
+                # drive straight again using stop
                 while self.t < 25:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                # turn right 90 degrees
                 self.hard_right_turn()
 
-                self.stop_moving()
-
+                self.stop_moving() #stop moving to keep timing more exact
+                #drive straight to grab coin from cage
                 while self.t < 20:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                #drive backwards a long time to use the wall to align
                 while self.t < 57:
                     self.drive_back()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                # drive straigh to not catch on the wall
                 while self.t < 5:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                #adjust for error with slight right turn
                 self.micro_right
-
+                # turn right to start returning
                 self.hard_right_turn()
 
-                self.stop_moving()
-
+                self.stop_moving() #stop moving to keep timing more exact
+                #drive straight back to the wall opening
                 while self.t < 50:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                # turn to face through the wall opening
                 self.hard_right_turn()
 
-                self.stop_moving()
-
+                self.stop_moving() #stop moving to keep timing more exact
+                #drive through the wall opening
                 while self.t < 30:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                #turn right toward start
                 self.hard_right_turn()
 
                 self.stop_moving()
-
+                #Drive to start
                 while self.t < 86:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
 
-
-                
-
+                #end run/ stop moving 
                 while True:
                     self.stop_moving()
 
-
+            #option for bonus run to grab the 20 point coins around the corner
             elif self.type == 'fuck2':
                 self.get_logger().info("check 1")
-
+                # wait start sequence
                 while self.t < 10:
-                    self.stop_moving()
+                    self.stop_moving() #stop moving to keep timing more exact
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                # drive straight to line up with the wall opening
                 while self.t < 84:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
                     
-                
+                #turn left to go through the door
                 self.hard_left_turn()
                 self.get_logger().info("check 2")
-                self.stop_moving()
-                
+                self.stop_moving() #stop moving to keep timing more exact
+                #drive through the door
                 while self.t < 31:
                     self.drive_straight()
                     self.t += 1
                 self.stop_moving()
                 self.t = 0
-
+            #turn toward coins
                 self.hard_left_turn()
                 
-                self.stop_moving()
-
+                self.stop_moving() #stop moving to keep timing more exact
+                # drive back to straighten against the wall
                 while self.t < 34:
                     self.drive_back()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                #drive forward after straightened
 
                 while self.t < 84:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
 
-
+                #turn right around the corner
                 self.hard_right_turn()
 
-                self.stop_moving()
-
+                self.stop_moving() #stop moving to keep timing more exact
+                #drive straight around the tight corner
                 while self.t < 40:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                #Leave area/ back out of corner
                 while self.t < 57:
                     self.drive_back()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                #drive slightly off the wall
                 while self.t < 3:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                #adjust for error
                 self.micro_right
-
+                #Turn to leave the corner
                 self.hard_right_turn()
 
-                self.stop_moving()
-
+                self.stop_moving() #stop moving to keep timing more exact
+                #drive back to wall opening
                 while self.t < 84:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                # turn to go through opening
                 self.hard_right_turn()
 
-                self.stop_moving()
-
+                self.stop_moving() #stop moving to keep timing more exact
+                # go through opening
                 while self.t < 30:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
-
+                # turn toward the starting area
                 self.hard_right_turn()
 
-                self.stop_moving()
-
+                self.stop_moving() #stop moving to keep timing more exact
+                # drive to the starting area
                 while self.t < 86:
                     self.drive_straight()
                     self.t += 1
-                self.stop_moving()
+                self.stop_moving() #stop moving to keep timing more exact
                 self.t = 0
 
-
-                
-
+                #stop moving and end run
                 while True:
-                    self.stop_moving()
+                    self.stop_moving() 
 
 
         """
